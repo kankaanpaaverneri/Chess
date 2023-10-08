@@ -27,3 +27,52 @@ function addPiecesToBoard() {
 
 initChessBoard();
 addPiecesToBoard();
+
+class Piece {
+    #type;
+    #side;
+    #isSelected;
+    constructor(type, side) {
+        this.#isSelected = false;
+        this.#type = type;
+        this.#side = side;
+    }
+    get isSelected() {
+        return this.#isSelected;
+    }
+    set isSelected(isSelected) {
+        this.#isSelected = isSelected;
+    }
+    highlightSquare() {
+        
+    }
+}
+
+const piecesArray = []; //For storing all the piece objects
+
+//Function initializes 32 piece objects
+function initPieceObjects() {
+    const imgs = document.querySelectorAll("img");
+    imgs.forEach(img => {
+
+        //Define piece side
+        let side;
+        if(img.getAttribute("src").includes("black"))
+            side = "black";
+        else if(img.getAttribute("src").includes("white"))
+            side = "white";
+
+        //Define pieceType
+        const pieceTypes = ["tower", "horse", "bishop", "king", "queen", "soldier"];
+        const [pieceType] = pieceTypes.filter(pieceType => {
+            if(img.getAttribute("src").includes(pieceType))
+                return pieceType;
+        })
+
+        //Create a new object
+        const piece = new Piece(pieceType, side);
+        piecesArray.push(piece);
+    })
+}
+
+initPieceObjects();

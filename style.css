@@ -18,3 +18,8 @@ body {
     width: 5rem;
     height: 5rem;
 }
+
+.highlight-color {
+    background: red;
+    background: rgb(252, 215, 215);
+}
