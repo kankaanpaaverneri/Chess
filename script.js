@@ -6,6 +6,7 @@ const chessBoard = {
     squareIds: [],
     piecesArray: [], //For storing all the piece objects
     turn: "white",
+    validMoveColor: "red",
 
     //Generate html for the chessboard squares
     initChessBoard: function() {
@@ -46,23 +47,36 @@ const chessBoard = {
         if(target.closest("img"))
         {
             //Find right pieceObject by comparing ids
-            chessBoard.selectedObject = this.piecesArray.find(piece => {
+            this.selectedObject = this.piecesArray.find(piece => {
               if(target.closest(".square").getAttribute("id") === piece.locationId)
                     return piece;
             });
 
             //Check sides
-            if(chessBoard.turn !== chessBoard.selectedObject.side)
+            if(this.turn !== chessBoard.selectedObject.side)
                 return;
 
 
             //Switch isSelected value
-            chessBoard.selectedObject.isSelected = chessBoard.selectedObject.isSelected === false ? true : false;
+            this.selectedObject.isSelected = this.selectedObject.isSelected === false ? true : false;
 
             //Highlight selected square
-            chessBoard.selectedObject.icon.closest(".square").style.background = "#fcba03";
+            this.selectedObject.icon.closest(".square").style.background = "#fcba03";
+            this.selectedObject.displayValidMovements();
             console.log(chessBoard.selectedObject);
         }
+    },
+
+    movePiece(target) {
+        console.log(target);
+        if(target.style.background === this.validMoveColor)
+        {
+            target.append(this.selectedObject.icon);
+            this.selectedObject.locationId = target.getAttribute("id");
+            this.selectedObject.turnCount++;
+        }
+        console.log(this.selectedObject);
+
     },
 
     createNewObject(locationId, pieceType, side, img) {
@@ -126,12 +140,14 @@ class Piece {
     #side;
     #isSelected;
     #icon;
+    #turnCount;
     constructor(locationId, type, side, icon) {
         this.#locationId = locationId;
         this.#isSelected = false;
         this.#type = type;
         this.#side = side;
         this.#icon = icon;
+        this.#turnCount = 0;
     }
 
     get type() {
@@ -167,6 +183,14 @@ class Piece {
         this.#icon = icon;
     }
 
+    get turnCount() {
+        return this.#turnCount;
+    }
+
+    set turnCount(turnCount) {
+        this.#turnCount = turnCount;
+    }
+
     get icon() {
         return this.#icon;
     }
@@ -177,12 +201,28 @@ class Soldier extends Piece {
     {
         super(locationId, type, side, icon);
     }
+
+    displayValidMovements() {
+        let [i, j] = this.locationId.split(" ");
+        if(this.turnCount === 0)
+        {
+            document.getElementById(`${i-2} ${j}`).style.background = chessBoard.validMoveColor;
+        }
+        if(document.getElementById(`${i-1} ${j}`).querySelector("img") && document.getElementById(`${i-2} ${j}`).querySelector("img"))
+            return;
+
+        document.getElementById(`${i-1} ${j}`).style.background = chessBoard.validMoveColor;
+    }
 }
 
 class Tower extends Piece {
     constructor(locationId, type, side, icon)
     {
         super(locationId, type, side, icon);
+    }
+
+    displayValidMovements() {
+        console.log(this.locationId);
     }
 }
 
@@ -191,12 +231,19 @@ class Horse extends Piece {
     {
         super(locationId, type, side, icon);
     }
+    displayValidMovements() {
+        console.log(this.locationId);
+    }
 }
 
 class Bishop extends Piece {
     constructor(locationId, type, side, icon)
     {
         super(locationId, type, side, icon);
+    }
+
+    displayValidMovements() {
+        console.log(this.locationId);
     }
 }
 
@@ -205,12 +252,20 @@ class King extends Piece {
     {
         super(locationId, type, side, icon);
     }
+
+    displayValidMovements() {
+        console.log(this.locationId);
+    }
 }
 
 class Queen extends Piece {
     constructor(locationId, type, side, icon)
     {
         super(locationId, type, side, icon);
+    }
+
+    displayValidMovements() {
+        console.log(this.locationId);
     }
 }
 
@@ -220,11 +275,10 @@ chessBoard.initPieceObjects();
 
 document.addEventListener("click", function(e) {
     e.preventDefault();
-    if(!chessBoard.selectedObject)
-        chessBoard.selectPiece(e.target);
-    else
-    {
-        console.log(chessBoard.selectedObject);
-    }
+    
+    if(chessBoard.selectedObject)
+            chessBoard.movePiece(e.target);
+
+    chessBoard.selectPiece(e.target);
     
 });
