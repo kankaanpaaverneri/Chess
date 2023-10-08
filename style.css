@@ -20,6 +20,5 @@ body {
 }
 
 .highlight-color {
-    background: red;
-    background: rgb(252, 215, 215);
+    background-color: rgba(250, 253, 40, 0.5);
 }
