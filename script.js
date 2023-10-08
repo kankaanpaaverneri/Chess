@@ -5,6 +5,7 @@ const chessBoard = {
     colors: [],
     squareIds: [],
     piecesArray: [], //For storing all the piece objects
+    turn: "white",
 
     //Generate html for the chessboard squares
     initChessBoard: function() {
@@ -41,6 +42,7 @@ const chessBoard = {
     selectPiece: function (target) {
         this.resetSquareColors();
         this.selectedObject = undefined;
+
         if(target.closest("img"))
         {
             //Find right pieceObject by comparing ids
@@ -49,13 +51,43 @@ const chessBoard = {
                     return piece;
             });
 
+            //Check sides
+            if(chessBoard.turn !== chessBoard.selectedObject.side)
+                return;
+
 
             //Switch isSelected value
             chessBoard.selectedObject.isSelected = chessBoard.selectedObject.isSelected === false ? true : false;
 
             //Highlight selected square
             chessBoard.selectedObject.icon.closest(".square").style.background = "#fcba03";
+            console.log(chessBoard.selectedObject);
         }
+    },
+
+    createNewObject(locationId, pieceType, side, img) {
+        let piece;
+        switch(pieceType) {
+            case "soldier":
+                piece = new Soldier(locationId, pieceType, side, img);
+                break;
+            case "tower":
+                piece = new Tower(locationId, pieceType, side, img);
+                break;
+            case "horse":
+                piece = new Horse(locationId, pieceType, side, img);
+                break;
+            case "bishop":
+                piece = new Bishop(locationId, pieceType, side, img);
+                break;
+            case "king":
+                piece = new King(locationId, pieceType, side, img);
+                break;
+            case "queen":
+                piece = new Queen(locationId, pieceType, side, img);
+                break; 
+        }
+        return piece;
     },
 
     //Function initializes 32 piece objects
@@ -82,7 +114,7 @@ const chessBoard = {
 
 
             //Create a new object
-            const piece = new Piece(locationId, pieceType, side, img);
+            let piece = this.createNewObject(locationId, pieceType, side, img);
             this.piecesArray.push(piece);
         })
     }
@@ -138,8 +170,47 @@ class Piece {
     get icon() {
         return this.#icon;
     }
-    highlightSquare() {
-        
+}
+
+class Soldier extends Piece {
+    constructor(locationId, type, side, icon)
+    {
+        super(locationId, type, side, icon);
+    }
+}
+
+class Tower extends Piece {
+    constructor(locationId, type, side, icon)
+    {
+        super(locationId, type, side, icon);
+    }
+}
+
+class Horse extends Piece {
+    constructor(locationId, type, side, icon)
+    {
+        super(locationId, type, side, icon);
+    }
+}
+
+class Bishop extends Piece {
+    constructor(locationId, type, side, icon)
+    {
+        super(locationId, type, side, icon);
+    }
+}
+
+class King extends Piece {
+    constructor(locationId, type, side, icon)
+    {
+        super(locationId, type, side, icon);
+    }
+}
+
+class Queen extends Piece {
+    constructor(locationId, type, side, icon)
+    {
+        super(locationId, type, side, icon);
     }
 }
 
@@ -149,6 +220,11 @@ chessBoard.initPieceObjects();
 
 document.addEventListener("click", function(e) {
     e.preventDefault();
-    chessBoard.selectPiece(e.target);
+    if(!chessBoard.selectedObject)
+        chessBoard.selectPiece(e.target);
+    else
+    {
+        console.log(chessBoard.selectedObject);
+    }
     
 });
