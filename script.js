@@ -46,7 +46,7 @@ const chessBoard = {
 
         if(target.closest("img"))
         {
-            //Find right pieceObject by comparing ids
+            //Find right pieceObject by comparing square ids with pieceArrayObject ids
             this.selectedObject = this.piecesArray.find(piece => {
               if(target.closest(".square").getAttribute("id") === piece.locationId)
                     return piece;
@@ -63,6 +63,7 @@ const chessBoard = {
             //Highlight selected square
             this.selectedObject.icon.closest(".square").style.background = "#fcba03";
             this.selectedObject.displayValidMovements();
+            this.selectedObject.displayValidEatMovements();
             console.log(chessBoard.selectedObject);
         }
     },
@@ -212,6 +213,19 @@ class Soldier extends Piece {
             return;
 
         document.getElementById(`${i-1} ${j}`).style.background = chessBoard.validMoveColor;
+    }
+
+    displayValidEatMovements() {
+        let [i, j] = this.locationId.split(" ");
+        
+        const rightCorner = document.getElementById(`${i-1} ${Number(j)+Number(1)}`);
+        const leftCorner = document.getElementById(`${i-1} ${j-1}`);
+        
+        if(leftCorner.querySelector("img"))
+            leftCorner.style.background = chessBoard.validMoveColor;
+
+        if(rightCorner.querySelector("img"))
+            rightCorner.style.background = chessBoard.validMoveColor;
     }
 }
 
