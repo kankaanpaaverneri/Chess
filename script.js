@@ -6,7 +6,9 @@ const chessBoard = {
     squareIds: [],
     piecesArray: [], //For storing all the piece objects
     turn: "white",
-    validMoveColor: "red",
+    selectionColor: "#e2dc67",
+    validMoveColor: "green",
+    validEatColor: "red",
 
     //Generate html for the chessboard squares
     initChessBoard: function() {
@@ -44,41 +46,45 @@ const chessBoard = {
         this.resetSquareColors();
         this.selectedObject = undefined;
 
-        if(target.closest("img"))
-        {
-            //Find right pieceObject by comparing square ids with pieceArrayObject ids
-            this.selectedObject = this.piecesArray.find(piece => {
-              if(target.closest(".square").getAttribute("id") === piece.locationId)
-                    return piece;
-            });
+        //Find right pieceObject
+        const pieceObject = this.piecesArray.find(piece => {
+            if(piece.icon === target && piece.icon.getAttribute("src").includes(`${this.turn}`)) return piece;
+        });
 
-            //Check sides
-            if(this.turn !== chessBoard.selectedObject.side)
-                return;
+        if(!pieceObject)
+            return null;
 
-
-            //Switch isSelected value
-            this.selectedObject.isSelected = this.selectedObject.isSelected === false ? true : false;
-
-            //Highlight selected square
-            this.selectedObject.icon.closest(".square").style.background = "#fcba03";
-            this.selectedObject.displayValidMovements();
-            this.selectedObject.displayValidEatMovements();
-            console.log(chessBoard.selectedObject);
-        }
+        //Highlight selected square
+        target.closest(".square").style.background = this.selectionColor;
+        pieceObject.displayValidMovements();
+        pieceObject.displayValidEatMovements();
+        return pieceObject;
     },
 
     movePiece(target) {
-        console.log(target);
-        if(target.style.background === this.validMoveColor)
-        {
-            target.append(this.selectedObject.icon);
-            this.selectedObject.locationId = target.getAttribute("id");
+        //Moving
+        const square = target.closest(".square");
+        if(square.style.background === this.validMoveColor) {
+            square.append(this.selectedObject.icon);
+            this.selectedObject.locationId = square.getAttribute("id");
             this.selectedObject.turnCount++;
+            chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
         }
-        console.log(this.selectedObject);
 
+        //Eating
+        if(square.style.background === this.validEatColor) {
+            square.append(this.selectedObject.icon);
+            square.removeChild(target);
+            this.selectedObject.locationId = square.getAttribute("id");
+            this.selectedObject.turnCount++;
+            chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
+        }
+
+        this.selectedObject = undefined;
+        this.resetSquareColors();
     },
+
+
 
     createNewObject(locationId, pieceType, side, img) {
         let piece;
@@ -132,7 +138,9 @@ const chessBoard = {
             let piece = this.createNewObject(locationId, pieceType, side, img);
             this.piecesArray.push(piece);
         })
-    }
+    },
+
+    isSquareEmpty: (square) => (!square.querySelector("img")) ? true : false,
 };
 
 class Piece {
@@ -149,6 +157,10 @@ class Piece {
         this.#side = side;
         this.#icon = icon;
         this.#turnCount = 0;
+    }
+
+    isOwnUnit(square) {
+        return square?.querySelector("img").getAttribute("src").includes(`${this.side}`) ? true : false;
     }
 
     get type() {
@@ -205,27 +217,35 @@ class Soldier extends Piece {
 
     displayValidMovements() {
         let [i, j] = this.locationId.split(" ");
-        if(this.turnCount === 0)
-        {
-            document.getElementById(`${i-2} ${j}`).style.background = chessBoard.validMoveColor;
-        }
-        if(document.getElementById(`${i-1} ${j}`).querySelector("img") && document.getElementById(`${i-2} ${j}`).querySelector("img"))
-            return;
+        i = parseInt(i);
+        j = parseInt(j);
 
-        document.getElementById(`${i-1} ${j}`).style.background = chessBoard.validMoveColor;
+        const firstSquare = document.getElementById(`${this.side === "white" ? i-1 : i+1} ${j}`);
+        const secondSquare = document.getElementById(`${this.side === "white" ? i-2 : i+2} ${j}`);
+
+        if(this.turnCount === 0 && chessBoard.isSquareEmpty(secondSquare))
+            secondSquare.style.background = chessBoard.validMoveColor;
+
+        if (chessBoard.isSquareEmpty(firstSquare))
+            firstSquare.style.background = chessBoard.validMoveColor;
     }
 
     displayValidEatMovements() {
         let [i, j] = this.locationId.split(" ");
+        i = parseInt(i);
+        j = parseInt(j);
         
-        const rightCorner = document.getElementById(`${i-1} ${Number(j)+Number(1)}`);
-        const leftCorner = document.getElementById(`${i-1} ${j-1}`);
-        
-        if(leftCorner.querySelector("img"))
-            leftCorner.style.background = chessBoard.validMoveColor;
+        const rightCorner = this.side === "white" ?
+            document.getElementById(`${i-1} ${j+1}`) : document.getElementById(`${i+1} ${j-1}`);
+        const leftCorner = this.side === "white" ? 
+            document.getElementById(`${i-1} ${j-1}`) : document.getElementById(`${i+1} ${j+1}`);
 
-        if(rightCorner.querySelector("img"))
-            rightCorner.style.background = chessBoard.validMoveColor;
+        //Does square have icon and is it own side
+        if(leftCorner?.querySelector("img") &&  !this.isOwnUnit(leftCorner))
+            leftCorner.style.background = chessBoard.validEatColor;
+
+        if(rightCorner?.querySelector("img") && !this.isOwnUnit(rightCorner))
+            rightCorner.style.background = chessBoard.validEatColor;
     }
 }
 
@@ -289,10 +309,9 @@ chessBoard.initPieceObjects();
 
 document.addEventListener("click", function(e) {
     e.preventDefault();
-    
     if(chessBoard.selectedObject)
-            chessBoard.movePiece(e.target);
-
-    chessBoard.selectPiece(e.target);
+        chessBoard.movePiece(e.target);
+    else
+        chessBoard.selectedObject = chessBoard.selectPiece(e.target);
     
 });
