@@ -61,24 +61,33 @@ const chessBoard = {
         return pieceObject;
     },
 
-    movePiece(target) {
-        //Moving
-        const square = target.closest(".square");
+    movement(square) {
         if(square.style.background === this.validMoveColor) {
             square.append(this.selectedObject.icon);
             this.selectedObject.locationId = square.getAttribute("id");
             this.selectedObject.turnCount++;
             chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
+            document.querySelector(".turn-value").textContent = chessBoard.turn.toUpperCase();
         }
+    },
 
-        //Eating
+    eating(square) {
         if(square.style.background === this.validEatColor) {
             square.append(this.selectedObject.icon);
-            square.removeChild(target);
+            square.removeChild(square.querySelector("img"));
             this.selectedObject.locationId = square.getAttribute("id");
             this.selectedObject.turnCount++;
             chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
+            document.querySelector(".turn-value").textContent = chessBoard.turn.toUpperCase();
         }
+    },
+
+    movePiece(target) {
+        const square = target.closest(".square");
+        //Moving
+        this.movement(square);
+        //Eating
+        this.eating(square);
 
         this.selectedObject = undefined;
         this.resetSquareColors();
@@ -256,7 +265,45 @@ class Tower extends Piece {
     }
 
     displayValidMovements() {
-        console.log(this.locationId);
+        let [column, row] = this.locationId.split(" ");
+        column = parseInt(column);
+        row = parseInt(row);
+        
+
+        this.scanSquaresY(column, row, "up");
+        this.scanSquaresY(column, row, "down");
+        this.scanSquaresX(column, row, "left");
+        this.scanSquaresX(column, row, "right");
+    }
+
+    scanSquaresY(column, row, direction) {
+        for(let i = column; direction === "up" ? i >= 0 : i < 8; direction === "up" ? i-- : i++) {
+            const square = document.getElementById(`${i} ${row}`);
+            if(this.locationId === square.getAttribute("id"))
+                continue;
+
+            if(square.querySelector("img"))
+                break;
+            else
+                square.style.background = chessBoard.validMoveColor;
+        }
+    }
+
+    scanSquaresX(column, row, direction) {
+        for(let j = row; direction === "left" ? j >= 0 : j < 8; direction === "left" ? j-- : j++) {
+            const square = document.getElementById(`${column} ${j}`);
+            if(this.locationId === square.getAttribute("id"))
+                continue;
+
+            if(square.querySelector("img"))
+                break;
+            else
+                square.style.background = chessBoard.validMoveColor;
+        }
+    }
+
+    displayValidEatMovements() {
+        console.log("moi");
     }
 }
 

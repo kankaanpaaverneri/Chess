@@ -1,8 +1,19 @@
 body {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    color: white;
+    font-family: 'Gabarito', sans-serif;
 }
+
+.header {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+
 
 .chessboard-container {
     display: grid;
