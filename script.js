@@ -57,7 +57,6 @@ const chessBoard = {
         //Highlight selected square
         target.closest(".square").style.background = this.selectionColor;
         pieceObject.displayValidMovements();
-        pieceObject.displayValidEatMovements();
         return pieceObject;
     },
 
@@ -237,12 +236,7 @@ class Soldier extends Piece {
 
         if (chessBoard.isSquareEmpty(firstSquare))
             firstSquare.style.background = chessBoard.validMoveColor;
-    }
 
-    displayValidEatMovements() {
-        let [i, j] = this.locationId.split(" ");
-        i = parseInt(i);
-        j = parseInt(j);
         
         const rightCorner = this.side === "white" ?
             document.getElementById(`${i-1} ${j+1}`) : document.getElementById(`${i+1} ${j-1}`);
@@ -269,41 +263,52 @@ class Tower extends Piece {
         column = parseInt(column);
         row = parseInt(row);
         
+        //Scan up
+        this.scanDirection(column, row, -1, 0);
+        
+        //Scan down
+        this.scanDirection(column, row, 1, 0);
 
-        this.scanSquaresY(column, row, "up");
-        this.scanSquaresY(column, row, "down");
-        this.scanSquaresX(column, row, "left");
-        this.scanSquaresX(column, row, "right");
+        //Scan left
+        this.scanDirection(column, row, 0, -1);
+
+        //Scan right
+        this.scanDirection(column, row, 0, 1);
     }
 
-    scanSquaresY(column, row, direction) {
-        for(let i = column; direction === "up" ? i >= 0 : i < 8; direction === "up" ? i-- : i++) {
-            const square = document.getElementById(`${i} ${row}`);
-            if(this.locationId === square.getAttribute("id"))
-                continue;
+    scanDirection(column, row, columnStep, rowStep) {
+        let i = column + columnStep;
+        let j = row + rowStep;
 
-            if(square.querySelector("img"))
+        while(i >= 0 && i < 8 && j >= 0 && j < 8) {
+            const square = document.getElementById(`${i} ${j}`);
+            const str = this.scanSquare(square);
+
+            if(str === "this-unit")
+                continue;
+            if(str === "own-unit" || str === "enemy")
                 break;
-            else
-                square.style.background = chessBoard.validMoveColor;
+
+            i += columnStep;
+            j += rowStep;
         }
     }
 
-    scanSquaresX(column, row, direction) {
-        for(let j = row; direction === "left" ? j >= 0 : j < 8; direction === "left" ? j-- : j++) {
-            const square = document.getElementById(`${column} ${j}`);
-            if(this.locationId === square.getAttribute("id"))
-                continue;
+    scanSquare(square) {
+        if(this.locationId === square.getAttribute("id"))
+            return "this-unit";
 
-            if(square.querySelector("img"))
-                break;
-            else
-                square.style.background = chessBoard.validMoveColor;
+        if(square.querySelector("img") && this.isOwnUnit(square))
+            return "own-unit";
+
+        if(square.querySelector("img") && !this.isOwnUnit(square)) {
+            square.style.background = chessBoard.validEatColor;
+            return "enemy";
         }
-    }
+            
 
-    displayValidEatMovements() {
-        console.log("moi");
+        square.style.background = chessBoard.validMoveColor;
+
     }
 }
 
