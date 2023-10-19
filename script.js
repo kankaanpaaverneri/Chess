@@ -171,6 +171,14 @@ class Piece {
         return square?.querySelector("img").getAttribute("src").includes(`${this.side}`) ? true : false;
     }
 
+    getThisLocation() {
+        let [i, j] = this.locationId.split(" ");
+        i = parseInt(i);
+        j = parseInt(j);
+        return [i, j];
+
+    }
+
     get type() {
         return this.#type;
     }
@@ -224,9 +232,7 @@ class Soldier extends Piece {
     }
 
     displayValidMovements() {
-        let [i, j] = this.locationId.split(" ");
-        i = parseInt(i);
-        j = parseInt(j);
+        const [i, j] = this.getThisLocation();
 
         const firstSquare = document.getElementById(`${this.side === "white" ? i-1 : i+1} ${j}`);
         const secondSquare = document.getElementById(`${this.side === "white" ? i-2 : i+2} ${j}`);
@@ -259,9 +265,7 @@ class Tower extends Piece {
     }
 
     displayValidMovements() {
-        let [column, row] = this.locationId.split(" ");
-        column = parseInt(column);
-        row = parseInt(row);
+        const [column, row] = this.getThisLocation();
         
         //Scan up
         this.scanDirection(column, row, -1, 0);
@@ -317,8 +321,32 @@ class Horse extends Piece {
     {
         super(locationId, type, side, icon);
     }
+    
     displayValidMovements() {
-        console.log(this.locationId);
+        const [column, row] = this.getThisLocation();
+
+        const squarePositions = [
+            [column-2, row+1],
+            [column-2, row-1],
+            [column-1, row+2],
+            [column-1, row-2],
+            [column+1, row+2],
+            [column+1, row-2],
+            [column+2, row+1],
+            [column+2, row-1]
+        ];
+
+        squarePositions.forEach(position => {
+            const square = document.getElementById(`${position[0]} ${position[1]}`);
+
+            if(!square)
+                return;
+
+            if(square.querySelector("img") && !this.isOwnUnit(square))
+                square.style.background = chessBoard.validEatColor;
+            if(!square.querySelector("img"))
+                square.style.background = chessBoard.validMoveColor;
+        })
     }
 }
 
