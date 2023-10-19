@@ -280,9 +280,9 @@ class Tower extends Piece {
         this.scanDirection(column, row, 0, 1);
     }
 
-    scanDirection(column, row, columnStep, rowStep) {
-        let i = column + columnStep;
-        let j = row + rowStep;
+    scanDirection(column, row, columnDirection, rowDirection) {
+        let i = column + columnDirection;
+        let j = row + rowDirection;
 
         while(i >= 0 && i < 8 && j >= 0 && j < 8) {
             const square = document.getElementById(`${i} ${j}`);
@@ -293,8 +293,8 @@ class Tower extends Piece {
             if(str === "own-unit" || str === "enemy")
                 break;
 
-            i += columnStep;
-            j += rowStep;
+            i += columnDirection;
+            j += rowDirection;
         }
     }
 
@@ -321,7 +321,7 @@ class Horse extends Piece {
     {
         super(locationId, type, side, icon);
     }
-    
+
     displayValidMovements() {
         const [column, row] = this.getThisLocation();
 
@@ -357,7 +357,52 @@ class Bishop extends Piece {
     }
 
     displayValidMovements() {
-        console.log(this.locationId);
+        const [column, row] = this.getThisLocation();
+        
+        //NorthEast
+        this.scanDirection(column, row, -1, 1);
+
+        //SouthEast
+        this.scanDirection(column, row, 1, 1);
+
+        //SouthWest
+        this.scanDirection(column, row, 1, -1);
+
+        //NorthWest
+        this.scanDirection(column, row, -1, -1);
+    }
+
+    scanDirection(column, row, columnDirection, rowDirection) {
+        let i = column + columnDirection;
+        let j = row + rowDirection;
+
+        while(i >= 0 && i < 8 && j >= 0 && j < 8) {
+            const square = document.getElementById(`${i} ${j}`);
+            if(!square)
+                continue;
+
+            //If this unit
+            if(this.locationId === square.getAttribute("id"))
+                continue;
+
+            //If enemy unit is on the square
+            if(square.querySelector("img") && !this.isOwnUnit(square)) {
+                square.style.background = chessBoard.validEatColor;
+                break;
+            }
+
+            //If own unit is on the square
+            if(square.querySelector("img") && this.isOwnUnit(square))
+                break;
+
+            //If square is empty
+            if(!square.querySelector("img"))
+                square.style.background = chessBoard.validMoveColor;
+
+            //Increment iterators
+            i += columnDirection;
+            j += rowDirection;
+        }
     }
 }
 
