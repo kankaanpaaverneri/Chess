@@ -413,7 +413,30 @@ class King extends Piece {
     }
 
     displayValidMovements() {
-        console.log(this.locationId);
+        const [column, row] = this.getThisLocation();
+        const squarePositions = [
+            [column-1, row+1],
+            [column, row+1],
+            [column+1, row+1],
+            [column+1, row],
+            [column+1, row-1],
+            [column, row-1],
+            [column-1, row-1],
+            [column-1, row]
+        ];
+
+        squarePositions.forEach(position => {
+            const square = document.getElementById(`${position[0]} ${position[1]}`);
+
+            if(!square)
+                return;
+
+            if(square.querySelector("img") && !this.isOwnUnit(square))
+                square.style.background = chessBoard.validEatColor;
+            if(!square.querySelector("img"))
+                square.style.background = chessBoard.validMoveColor;
+        })
+
     }
 }
 
