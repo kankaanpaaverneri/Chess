@@ -20,6 +20,7 @@ body {
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
     border: 2px solid black;
+    box-shadow: 20px 20px 25px rgb(0, 0, 0);
 }
 
 .square {

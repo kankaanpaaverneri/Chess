@@ -9,6 +9,8 @@ const chessBoard = {
     selectionColor: "#e2dc67",
     validMoveColor: "green",
     validEatColor: "red",
+    checkColor: "pink",
+    check: false,
 
     //Generate html for the chessboard squares
     initChessBoard: function() {
@@ -66,7 +68,7 @@ const chessBoard = {
             this.selectedObject.locationId = square.getAttribute("id");
             this.selectedObject.turnCount++;
             chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
-            document.querySelector(".turn-value").textContent = chessBoard.turn.toUpperCase();
+            document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
         }
     },
 
@@ -77,7 +79,7 @@ const chessBoard = {
             this.selectedObject.locationId = square.getAttribute("id");
             this.selectedObject.turnCount++;
             chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
-            document.querySelector(".turn-value").textContent = chessBoard.turn.toUpperCase();
+            document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
         }
     },
 
@@ -87,6 +89,8 @@ const chessBoard = {
         this.movement(square);
         //Eating
         this.eating(square);
+
+        //Check
 
         this.selectedObject = undefined;
         this.resetSquareColors();
@@ -148,7 +152,7 @@ const chessBoard = {
         })
     },
 
-    isSquareEmpty: (square) => (!square.querySelector("img")) ? true : false,
+    isSquareEmpty: (square) => !square.querySelector("img") ? true : false,
 };
 
 class Piece {
@@ -177,6 +181,33 @@ class Piece {
         j = parseInt(j);
         return [i, j];
 
+    }
+
+    scanDirection(column, row, columnDirection, rowDirection) {
+        let i = column + columnDirection;
+        let j = row + rowDirection;
+
+        while(i >= 0 && i < 8 && j >= 0 && j < 8) {
+            const square = document.getElementById(`${i} ${j}`);
+
+            //if square contains this object
+            if(this.locationId === square.getAttribute("id"))
+                continue;
+
+            if(square.querySelector("img") && !this.isOwnUnit(square)) {
+                square.style.background = chessBoard.validEatColor;
+                break;
+            }
+
+            if(square.querySelector("img") && this.isOwnUnit(square)) {
+                break;
+            }
+
+            square.style.background = chessBoard.validMoveColor;
+
+            i += columnDirection;
+            j += rowDirection;
+        }
     }
 
     get type() {
@@ -279,41 +310,6 @@ class Tower extends Piece {
         //Scan right
         this.scanDirection(column, row, 0, 1);
     }
-
-    scanDirection(column, row, columnDirection, rowDirection) {
-        let i = column + columnDirection;
-        let j = row + rowDirection;
-
-        while(i >= 0 && i < 8 && j >= 0 && j < 8) {
-            const square = document.getElementById(`${i} ${j}`);
-            const str = this.scanSquare(square);
-
-            if(str === "this-unit")
-                continue;
-            if(str === "own-unit" || str === "enemy")
-                break;
-
-            i += columnDirection;
-            j += rowDirection;
-        }
-    }
-
-    scanSquare(square) {
-        if(this.locationId === square.getAttribute("id"))
-            return "this-unit";
-
-        if(square.querySelector("img") && this.isOwnUnit(square))
-            return "own-unit";
-
-        if(square.querySelector("img") && !this.isOwnUnit(square)) {
-            square.style.background = chessBoard.validEatColor;
-            return "enemy";
-        }
-            
-
-        square.style.background = chessBoard.validMoveColor;
-
-    }
 }
 
 class Horse extends Piece {
@@ -371,39 +367,6 @@ class Bishop extends Piece {
         //NorthWest
         this.scanDirection(column, row, -1, -1);
     }
-
-    scanDirection(column, row, columnDirection, rowDirection) {
-        let i = column + columnDirection;
-        let j = row + rowDirection;
-
-        while(i >= 0 && i < 8 && j >= 0 && j < 8) {
-            const square = document.getElementById(`${i} ${j}`);
-            if(!square)
-                continue;
-
-            //If this unit
-            if(this.locationId === square.getAttribute("id"))
-                continue;
-
-            //If enemy unit is on the square
-            if(square.querySelector("img") && !this.isOwnUnit(square)) {
-                square.style.background = chessBoard.validEatColor;
-                break;
-            }
-
-            //If own unit is on the square
-            if(square.querySelector("img") && this.isOwnUnit(square))
-                break;
-
-            //If square is empty
-            if(!square.querySelector("img"))
-                square.style.background = chessBoard.validMoveColor;
-
-            //Increment iterators
-            i += columnDirection;
-            j += rowDirection;
-        }
-    }
 }
 
 class King extends Piece {
@@ -436,7 +399,6 @@ class King extends Piece {
             if(!square.querySelector("img"))
                 square.style.background = chessBoard.validMoveColor;
         })
-
     }
 }
 
@@ -447,7 +409,32 @@ class Queen extends Piece {
     }
 
     displayValidMovements() {
-        console.log(this.locationId);
+        const [column, row] = this.getThisLocation();
+
+        //NorthEast
+        this.scanDirection(column, row, -1, 1);
+
+        //SouthEast
+        this.scanDirection(column, row, 1, 1);
+
+        //SouthWest
+        this.scanDirection(column, row, 1, -1);
+
+        //NorthWest
+        this.scanDirection(column, row, -1, -1);
+
+        //Scan up
+        this.scanDirection(column, row, -1, 0);
+        
+        //Scan down
+        this.scanDirection(column, row, 1, 0);
+
+        //Scan left
+        this.scanDirection(column, row, 0, -1);
+
+        //Scan right
+        this.scanDirection(column, row, 0, 1);
+
     }
 }
 
