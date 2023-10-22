@@ -2,7 +2,7 @@
 
 const chessBoard = {
     selectedObject: undefined,
-    colors: [],
+    squareColors: [],
     squareIds: [],
     piecesArray: [], //For storing all the piece objects
     turn: "white",
@@ -16,13 +16,15 @@ const chessBoard = {
         const chessBoardContainer = document.querySelector(".chessboard-container");
         for(let column = 0; column < 8; column++) {
             const isColumnOdd = column % 2 == 1;
+            const squareColorsRow = [];
             for(let row = 0; row < 8; row++) {
                 const squareColor = row % 2 == isColumnOdd ? "grey" : "white";
                 const html = `<div id="${column} ${row}" class="square" style="background-color: ${squareColor};"></div>`;
                 chessBoardContainer.insertAdjacentHTML("beforeend", html);
-                chessBoard.colors.push(squareColor);
+                squareColorsRow.push(squareColor);
                 chessBoard.squareIds.push(`${column} ${row}`);
             }
+            this.squareColors.push(squareColorsRow);
         }
     },
     //Generate html for adding icons to the chessboard
@@ -39,8 +41,12 @@ const chessBoard = {
     },
 
     resetSquareColors: function() {
-        const squares = document.querySelectorAll(".square");
-        squares.forEach((square, i) => square.style.background = this.colors[i]);
+        for(let i = 0; i < 8; i++) {
+            for(let j = 0; j < 8; j++) {
+                const square = document.getElementById(`${i} ${j}`);
+                square.style.background = this.squareColors[i][j];
+            }
+        }
     },
 
     selectPiece: function (target) {
@@ -55,9 +61,15 @@ const chessBoard = {
         if(!pieceObject)
             return null;
 
+
+        pieceObject.displayValidMovements();
+
+        if(pieceObject.type === "king") {
+            pieceObject.removeKingsDeathSquares();
+        }
+
         //Highlight selected square
         target.closest(".square").style.background = this.selectionColor;
-        pieceObject.displayValidMovements();
         return pieceObject;
     },
 
@@ -182,7 +194,6 @@ const chessBoard = {
             const squares = document.querySelectorAll(".square");
             squares.forEach(square => {
                 if(square.style.background === this.validEatColor && this.isKing(square)) {
-                    console.log(square, piece);
                     isCheck = true;
                 }
             });
@@ -433,11 +444,52 @@ class King extends Piece {
             if(!square)
                 return;
 
-            if(square.querySelector("img") && !this.isOwnUnit(square))
+            if(square.querySelector("img") && !this.isOwnUnit(square)) {
                 square.style.background = chessBoard.validEatColor;
-            if(!square.querySelector("img"))
+            }
+            if(!square.querySelector("img")) {
                 square.style.background = chessBoard.validMoveColor;
+            }
         })
+        
+    }
+
+    getDeathSquares() {
+        const deathSquares = [];
+        const squares = [...document.querySelectorAll(".square")];
+        const movementSquares = squares.filter(square => {
+            if(square.style.background === chessBoard.validMoveColor ||
+                square.style.background === chessBoard.validEatColor)
+                return square;
+        });
+        movementSquares.forEach(movSquare => {
+            movSquare.appendChild(this.icon);
+            chessBoard.piecesArray.forEach(piece => {
+                if(piece.side !== this.side)
+                    piece.displayValidMovements();
+
+                if(movSquare.style.background === chessBoard.validEatColor) {
+                    deathSquares.push(movSquare);
+                }
+                chessBoard.resetSquareColors();
+            });
+            document.getElementById(this.locationId).appendChild(this.icon);
+        })
+        return deathSquares;
+    }
+
+    removeKingsDeathSquares() {
+        const deathSquares = this.getDeathSquares();
+            
+        if(deathSquares.length > 0) {
+            this.displayValidMovements();
+            deathSquares.forEach(square => {
+                const [column, row] = square.getAttribute("id").split(" ");
+                square.style.background = chessBoard.squareColors[column][row];
+            })
+        } else {
+            this.displayValidMovements();
+        }
     }
 }
 
