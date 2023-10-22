@@ -9,7 +9,6 @@ const chessBoard = {
     selectionColor: "#e2dc67",
     validMoveColor: "green",
     validEatColor: "red",
-    checkColor: "pink",
     check: false,
 
     //Generate html for the chessboard squares
@@ -74,6 +73,7 @@ const chessBoard = {
 
     eating(square) {
         if(square.style.background === this.validEatColor) {
+            this.removeEatenObjectFromArray(square);
             square.append(this.selectedObject.icon);
             square.removeChild(square.querySelector("img"));
             this.selectedObject.locationId = square.getAttribute("id");
@@ -83,6 +83,15 @@ const chessBoard = {
         }
     },
 
+    removeEatenObjectFromArray(square) {
+        const piece = this.piecesArray.find((piece) => {
+            if(piece.locationId === square.getAttribute("id"))
+                return piece;
+        });
+        const index = this.piecesArray.indexOf(piece);
+        this.piecesArray.splice(index, 1);
+    },
+
     movePiece(target) {
         const square = target.closest(".square");
         //Moving
@@ -90,10 +99,18 @@ const chessBoard = {
         //Eating
         this.eating(square);
 
-        //Check
-
         this.selectedObject = undefined;
         this.resetSquareColors();
+
+        //Check
+        if(this.isCheck() === true) {
+            this.check = true;
+            document.querySelector(".check").classList.remove("hidden");
+        }
+        else {
+            this.check = false;
+            document.querySelector(".check").classList.add("hidden");
+        }
     },
 
 
@@ -153,6 +170,28 @@ const chessBoard = {
     },
 
     isSquareEmpty: (square) => !square.querySelector("img") ? true : false,
+    isKing: (square) => square.querySelector("img")?.getAttribute("src").includes("king"),
+    isCheck: function () {
+        let isCheck = false;
+        
+        this.piecesArray.forEach(piece => {
+            //Highlight piece ValidMovements
+            piece.displayValidMovements();
+
+            //Loop through all squares and find out if any of them have validEatColor and king
+            const squares = document.querySelectorAll(".square");
+            squares.forEach(square => {
+                if(square.style.background === this.validEatColor && this.isKing(square)) {
+                    console.log(square, piece);
+                    isCheck = true;
+                }
+            });
+
+            this.resetSquareColors();
+        });
+        return isCheck;
+    },
+
 };
 
 class Piece {

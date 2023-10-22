@@ -7,6 +7,10 @@ body {
     font-family: 'Gabarito', sans-serif;
 }
 
+.hidden {
+    display: none;
+}
+
 .header {
     display: flex;
     flex-direction: column;
