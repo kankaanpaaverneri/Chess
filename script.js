@@ -463,7 +463,17 @@ class King extends Piece {
                 return square;
         });
         movementSquares.forEach(movSquare => {
+            //if there is a icon in the movSquare
+            let removedPiece = undefined;
+            if(movSquare.querySelector("img")) {
+                //function to temporarily remove the icon and the object
+                removedPiece = this.removeIconTemporarily(movSquare);
+            }
+
+            //Append king to movSquare
             movSquare.appendChild(this.icon);
+
+            //Check with every opposite side piece that if they threaten appended king
             chessBoard.piecesArray.forEach(piece => {
                 if(piece.side !== this.side)
                     piece.displayValidMovements();
@@ -473,9 +483,26 @@ class King extends Piece {
                 }
                 chessBoard.resetSquareColors();
             });
+            //Remove appended king
             document.getElementById(this.locationId).appendChild(this.icon);
+            if(removedPiece)
+                this.appendBackRemovedPiece(removedPiece);
         })
         return deathSquares;
+    }
+
+    removeIconTemporarily(square) {
+        const piece = chessBoard.piecesArray.find(piece => {
+            if(piece.icon === square.querySelector("img"))
+                return piece.icon;
+        });
+        square.removeChild(square.querySelector("img"));
+        return piece;
+    }
+
+    appendBackRemovedPiece(removedPiece) {
+        const locationId = removedPiece.locationId;
+        document.getElementById(`${locationId}`).appendChild(removedPiece.icon);
     }
 
     removeKingsDeathSquares() {
