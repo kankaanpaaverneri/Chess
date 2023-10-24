@@ -10,6 +10,7 @@ const chessBoard = {
     validMoveColor: "green",
     validEatColor: "red",
     check: false,
+    checkMate: false,
 
     //Generate html for the chessboard squares
     initChessBoard: function() {
@@ -65,7 +66,7 @@ const chessBoard = {
         pieceObject.displayValidMovements();
 
         if(pieceObject.type === "king") {
-            pieceObject.removeKingsDeathSquares();
+            pieceObject.removeKingsCheckSquares();
         }
 
         //Highlight selected square
@@ -454,19 +455,22 @@ class King extends Piece {
         
     }
 
-    getDeathSquares() {
-        const deathSquares = [];
+    getCheckSquares() {
+        const checkSquares = [];
         const squares = [...document.querySelectorAll(".square")];
+        
         const movementSquares = squares.filter(square => {
             if(square.style.background === chessBoard.validMoveColor ||
                 square.style.background === chessBoard.validEatColor)
                 return square;
         });
+        //We have movementSquares so we can reset the colors for now
+        chessBoard.resetSquareColors();
         movementSquares.forEach(movSquare => {
             //if there is a icon in the movSquare
             let removedPiece = undefined;
             if(movSquare.querySelector("img")) {
-                //function to temporarily remove the icon and the object
+                //function to temporarily remove the icon
                 removedPiece = this.removeIconTemporarily(movSquare);
             }
 
@@ -475,11 +479,11 @@ class King extends Piece {
 
             //Check with every opposite side piece that if they threaten appended king
             chessBoard.piecesArray.forEach(piece => {
-                if(piece.side !== this.side)
+                if(piece.side !== this.side && piece !== removedPiece)
                     piece.displayValidMovements();
 
                 if(movSquare.style.background === chessBoard.validEatColor) {
-                    deathSquares.push(movSquare);
+                    checkSquares.push(movSquare);
                 }
                 chessBoard.resetSquareColors();
             });
@@ -487,8 +491,9 @@ class King extends Piece {
             document.getElementById(this.locationId).appendChild(this.icon);
             if(removedPiece)
                 this.appendBackRemovedPiece(removedPiece);
-        })
-        return deathSquares;
+        });
+
+        return checkSquares;
     }
 
     removeIconTemporarily(square) {
@@ -505,12 +510,12 @@ class King extends Piece {
         document.getElementById(`${locationId}`).appendChild(removedPiece.icon);
     }
 
-    removeKingsDeathSquares() {
-        const deathSquares = this.getDeathSquares();
+    removeKingsCheckSquares() {
+        const checkSquares = this.getCheckSquares();
             
-        if(deathSquares.length > 0) {
+        if(checkSquares.length > 0) {
             this.displayValidMovements();
-            deathSquares.forEach(square => {
+            checkSquares.forEach(square => {
                 const [column, row] = square.getAttribute("id").split(" ");
                 square.style.background = chessBoard.squareColors[column][row];
             })
