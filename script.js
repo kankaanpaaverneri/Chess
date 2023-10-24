@@ -456,44 +456,58 @@ class King extends Piece {
     }
 
     getCheckSquares() {
+        //This function expects that the kings moves are highlighted in the board
         const checkSquares = [];
         const squares = [...document.querySelectorAll(".square")];
         
-        const movementSquares = squares.filter(square => {
-            if(square.style.background === chessBoard.validMoveColor ||
-                square.style.background === chessBoard.validEatColor)
-                return square;
-        });
-        //We have movementSquares so we can reset the colors for now
+        //Get every kings possible movements in to movementSquares array
+        const movementSquares = this.getAllPossibleKingsMovements(squares);
         chessBoard.resetSquareColors();
-        movementSquares.forEach(movSquare => {
-            //if there is a icon in the movSquare
-            let removedPiece = undefined;
-            if(movSquare.querySelector("img")) {
-                //function to temporarily remove the icon
-                removedPiece = this.removeIconTemporarily(movSquare);
-            }
+        this.checkIfMovementSquaresSafe(movementSquares, checkSquares);
+        
 
-            //Append king to movSquare
-            movSquare.appendChild(this.icon);
+        return checkSquares;
+    }
+
+    checkIfMovementSquaresSafe(movementSquares, checkSquares) {
+        movementSquares.forEach(movementSquare => {
+
+            //if there is a icon in the movementSquare, remove it temporarily.
+            let removedPiece = undefined;
+            if(movementSquare.querySelector("img"))
+                removedPiece = this.removeIconTemporarily(movementSquare);
+
+            //Append king to movementSquare
+            movementSquare.appendChild(this.icon);
 
             //Check with every opposite side piece that if they threaten appended king
-            chessBoard.piecesArray.forEach(piece => {
-                if(piece.side !== this.side && piece !== removedPiece)
-                    piece.displayValidMovements();
-
-                if(movSquare.style.background === chessBoard.validEatColor) {
-                    checkSquares.push(movSquare);
-                }
-                chessBoard.resetSquareColors();
-            });
+            this.checkForThreatsToKing(movementSquare, checkSquares, removedPiece);
             //Remove appended king
             document.getElementById(this.locationId).appendChild(this.icon);
             if(removedPiece)
                 this.appendBackRemovedPiece(removedPiece);
         });
+    }
 
-        return checkSquares;
+    getAllPossibleKingsMovements(squares) {
+        const movementSquares = squares.filter(square => {
+            if(square.style.background === chessBoard.validMoveColor ||
+                square.style.background === chessBoard.validEatColor)
+                return square;
+        });
+        return movementSquares;
+    }
+
+    checkForThreatsToKing(movementSquare, checkSquares, removedPiece) {
+        chessBoard.piecesArray.forEach(piece => {
+            if(piece.side !== this.side && piece !== removedPiece)
+                piece.displayValidMovements();
+
+            if(movementSquare.style.background === chessBoard.validEatColor) {
+                checkSquares.push(movementSquare);
+            }
+            chessBoard.resetSquareColors();
+        });
     }
 
     removeIconTemporarily(square) {
