@@ -10,6 +10,7 @@ const chessBoard = {
     validMoveColor: "green",
     validEatColor: "red",
     check: false,
+    turnsWhileCheck: 0,
     checkMate: false,
 
     //Generate html for the chessboard squares
@@ -78,8 +79,8 @@ const chessBoard = {
         if(square.style.background === this.validMoveColor) {
             square.append(this.selectedObject.icon);
             this.selectedObject.locationId = square.getAttribute("id");
-            this.selectedObject.turnCount++;
             chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
+            this.selectedObject.turnCount++;
             document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
         }
     },
@@ -90,8 +91,8 @@ const chessBoard = {
             square.append(this.selectedObject.icon);
             square.removeChild(square.querySelector("img"));
             this.selectedObject.locationId = square.getAttribute("id");
-            this.selectedObject.turnCount++;
             chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
+            this.selectedObject.turnCount++;
             document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
         }
     },
@@ -106,6 +107,10 @@ const chessBoard = {
     },
 
     movePiece(target) {
+        const originalPieceLocation = this.selectedObject.locationId;
+        const originalSelectedObject = this.selectedObject;
+
+
         const square = target.closest(".square");
         //Moving
         this.movement(square);
@@ -113,17 +118,30 @@ const chessBoard = {
         this.eating(square);
 
         this.selectedObject = undefined;
-        this.resetSquareColors();
 
         //Check
         if(this.isCheck() === true) {
             this.check = true;
+            this.turnsWhileCheck++;
             document.querySelector(".check").classList.remove("hidden");
         }
         else {
             this.check = false;
             document.querySelector(".check").classList.add("hidden");
+            this.turnsWhileCheck = 0;
         }
+
+        if(this.turnsWhileCheck >= 2)
+            this.undoMove(originalPieceLocation, originalSelectedObject);
+    },
+
+    undoMove(originalPieceLocation, originalSelectedObject) {
+        this.turn = originalSelectedObject.side;
+        document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
+        const originalSquare = document.getElementById(`${originalPieceLocation}`);
+        originalSquare.appendChild(originalSelectedObject.icon);
+        originalSelectedObject.locationId = originalSquare.getAttribute("id");
+        this.resetSquareColors();
     },
 
 
