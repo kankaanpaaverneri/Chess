@@ -10,6 +10,7 @@ const chessBoard = {
     validMoveColor: "green",
     validEatColor: "red",
     check: false,
+    whichSideCheck: undefined,
     turnsWhileCheck: 0,
     checkMate: false,
 
@@ -87,13 +88,15 @@ const chessBoard = {
 
     eating(square) {
         if(square.style.background === this.validEatColor) {
-            this.removeEatenObjectFromArray(square);
+            const removedPiece = this.removeEatenObjectFromArray(square);
             square.append(this.selectedObject.icon);
             square.removeChild(square.querySelector("img"));
             this.selectedObject.locationId = square.getAttribute("id");
             chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
             this.selectedObject.turnCount++;
             document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
+            this.resetSquareColors();
+            return removedPiece;
         }
     },
 
@@ -104,20 +107,19 @@ const chessBoard = {
         });
         const index = this.piecesArray.indexOf(piece);
         this.piecesArray.splice(index, 1);
+        return piece;
     },
 
     movePiece(target) {
         const originalPieceLocation = this.selectedObject.locationId;
         const originalSelectedObject = this.selectedObject;
 
-
         const square = target.closest(".square");
         //Moving
         this.movement(square);
         //Eating
-        this.eating(square);
+        const removedPiece = this.eating(square);
 
-        this.selectedObject = undefined;
 
         //Check
         if(this.isCheck() === true) {
@@ -127,21 +129,42 @@ const chessBoard = {
         }
         else {
             this.check = false;
+            this.whichSideCheck = undefined;
             document.querySelector(".check").classList.add("hidden");
             this.turnsWhileCheck = 0;
         }
+        this.selectedObject = undefined;
+        //If check isn´t cleared after the move then we undoMove
+        if(this.turnsWhileCheck >= 2) {
+            console.log("HOMO");
+            this.undoMove(originalPieceLocation, originalSelectedObject, removedPiece);
+        }
 
-        if(this.turnsWhileCheck >= 2)
+        if(this.turnsWhileCheck === 1 && this.whichSideCheck !== this.turn) {
             this.undoMove(originalPieceLocation, originalSelectedObject);
+            document.querySelector(".check").classList.add("hidden");
+            this.turnsWhileCheck = 0;
+        }
     },
 
-    undoMove(originalPieceLocation, originalSelectedObject) {
+    undoMove(originalPieceLocation, originalSelectedObject, removedPiece) {
         this.turn = originalSelectedObject.side;
         document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
         const originalSquare = document.getElementById(`${originalPieceLocation}`);
         originalSquare.appendChild(originalSelectedObject.icon);
         originalSelectedObject.locationId = originalSquare.getAttribute("id");
+        originalSelectedObject.turnCount--;
         this.resetSquareColors();
+
+        //have to undo eating if there has been eating
+        if(removedPiece)
+            this.undoEating(removedPiece);
+    },
+
+    undoEating(removedPiece) {
+        const square = document.getElementById(`${removedPiece.locationId}`);
+        square.appendChild(removedPiece.icon);
+        this.piecesArray.push(removedPiece);
     },
 
 
@@ -214,6 +237,7 @@ const chessBoard = {
             squares.forEach(square => {
                 if(square.style.background === this.validEatColor && this.isKing(square)) {
                     isCheck = true;
+                    this.whichSideCheck = this.checkedKingSide(square);
                 }
             });
 
@@ -221,6 +245,13 @@ const chessBoard = {
         });
         return isCheck;
     },
+    checkedKingSide: (square) => {
+        const src = square.querySelector("img").getAttribute("src");
+        if(src.includes("white"))
+            return "white";
+        else if(src.includes("black"))
+            return "black";
+    }
 
 };
 
@@ -483,7 +514,6 @@ class King extends Piece {
         chessBoard.resetSquareColors();
         this.checkIfMovementSquaresSafe(movementSquares, checkSquares);
         
-
         return checkSquares;
     }
 
@@ -500,6 +530,7 @@ class King extends Piece {
 
             //Check with every opposite side piece that if they threaten appended king
             this.checkForThreatsToKing(movementSquare, checkSquares, removedPiece);
+
             //Remove appended king
             document.getElementById(this.locationId).appendChild(this.icon);
             if(removedPiece)
