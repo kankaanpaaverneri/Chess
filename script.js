@@ -403,6 +403,9 @@ class Soldier extends Piece {
         const firstSquare = document.getElementById(`${this.side === "white" ? i-1 : i+1} ${j}`);
         const secondSquare = document.getElementById(`${this.side === "white" ? i-2 : i+2} ${j}`);
 
+        if(!firstSquare)
+            return;
+
         if(this.turnCount === 0 && chessBoard.isSquareEmpty(secondSquare) && chessBoard.isSquareEmpty(firstSquare))
             secondSquare.style.background = chessBoard.validMoveColor;
 
