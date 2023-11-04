@@ -11,6 +11,7 @@ const chessBoard = {
     validEatColor: "red",
     check: false,
     checkMate: false,
+    castleSquare: undefined,
 
     //Generate html for the chessboard squares
     initChessBoard: function() {
@@ -67,6 +68,7 @@ const chessBoard = {
 
         if(pieceObject.type === "king") {
             pieceObject.removeKingsCheckSquares();
+            this.castleSquare = pieceObject.displayCastle(this);
         }
 
         
@@ -134,6 +136,26 @@ const chessBoard = {
         }
     },
 
+    castle(square) {
+
+        if(!this.castleSquare)
+            return;
+
+        //Assumes that tower is in place
+        const towerSquare = document.getElementById(`${this.turn === "white" ? 7 : 0} ${0}`);
+        const towerMovementSquare = document.getElementById(`${this.turn === "white" ? 7 : 0} ${2}`);
+
+        const tower = this.piecesArray.find(piece => {
+            if(piece.icon === towerSquare.querySelector("img") && piece.locationId === towerSquare.getAttribute("id"))
+                return piece;
+        });
+        console.log(tower);
+
+        towerMovementSquare.appendChild(tower.icon);
+        tower.locationId = towerMovementSquare.getAttribute("id");
+        tower.turnCount++;
+    },
+
     movePiece(target) {
         const square = target.closest(".square");
         if(!square) {
@@ -141,8 +163,14 @@ const chessBoard = {
             return;
         }
 
+
+        //Castle
+        if(square.style.background === this.validMoveColor)
+            this.castle(square);
+
         //Moving
         this.movement(square);
+
         //Eating
         this.eating(square);
 
@@ -538,7 +566,7 @@ class King extends Piece {
             if(!square.querySelector("img")) {
                 square.style.background = chessBoard.validMoveColor;
             }
-        })
+        });
         
     }
 
@@ -623,6 +651,47 @@ class King extends Piece {
         } else {
             this.displayValidMovements();
         }
+    }
+
+    displayCastle(chessBoardObject) {
+        let castleSquare = undefined;
+        if(this.turnCount === 0) {
+            const [thisPositionColumn, thisPositionRow] = this.getThisLocation();
+            const castleSquareNear = document.getElementById(`${thisPositionColumn} ${thisPositionRow - 1}`);
+            const castleSquareFar = document.getElementById(`${thisPositionColumn} ${thisPositionRow - 2}`);
+            if(!chessBoardObject.isSquareEmpty(castleSquareNear) || !chessBoardObject.isSquareEmpty(castleSquareFar)) {
+                this.displayValidMovements();
+                return;
+            }
+            if(!this.isSquareSafe(castleSquareNear, chessBoardObject)) {
+                this.displayValidMovements();
+                return;
+            }
+            if(!this.isSquareSafe(castleSquareFar, chessBoardObject)) {
+                this.displayValidMovements();
+                return;
+            }
+
+            castleSquareFar.style.background = chessBoardObject.validMoveColor;
+            this.displayValidMovements();
+            castleSquare = castleSquareNear;
+        }
+        return castleSquare;
+    }
+
+    isSquareSafe(square, chessBoardObject) {
+        let squareIsSafe = true;
+        chessBoard.resetSquareColors();
+        chessBoardObject.piecesArray.forEach(piece => {
+            if(piece.side !== chessBoardObject.turn) {
+                piece.displayValidMovements();
+                if(square.style.background === chessBoardObject.validEatColor || square.style.background === chessBoardObject.validMoveColor) {
+                    squareIsSafe = false;
+                }
+                chessBoardObject.resetSquareColors();
+            }
+        });
+        return squareIsSafe;
     }
 }
 
