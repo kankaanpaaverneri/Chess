@@ -70,39 +70,14 @@ const chessBoard = {
         }
 
         
-        this.willPieceDefendKing(pieceObject);
+        pieceObject.willPieceDefendKing(this);
 
         //Highlight selected square
         target.closest(".square").style.background = this.selectionColor;
         return pieceObject;
     },
 
-    willPieceDefendKing(pieceObject) {
-        const movementSquares = this.getAllMovementSquares();
-        const validMovementSquares = [];
-
-        movementSquares.forEach(square => {
-
-            //Remove icon if it already has one
-            let removedPiece = undefined;
-            if(square.querySelector("img"))
-                removedPiece = this.removeObjectFromArray(square);
-
-            square.appendChild(pieceObject.icon);
-            this.resetSquareColors();
-            if(!this.isCheck())
-                validMovementSquares.push(square);
-
-            //Append the removed icon back
-            if(removedPiece) {
-                square.appendChild(removedPiece.icon);
-                this.piecesArray.push(removedPiece);
-            }
-        });
-        document.getElementById(`${pieceObject.locationId}`).appendChild(pieceObject.icon);
-
-        this.displayValidCheckDefendMovements(validMovementSquares);
-    },
+    
 
     getAllMovementSquares() {
         const movementSquares = [];
@@ -277,7 +252,7 @@ const chessBoard = {
                 this.piecesArray[i].removeKingsCheckSquares();
             }
             
-            this.willPieceDefendKing(piece);
+            piece.willPieceDefendKing(this);
 
             const squares = document.querySelectorAll(".square");
             squares.forEach(square => {
@@ -296,12 +271,10 @@ class Piece {
     #locationId;
     #type;
     #side;
-    #isSelected;
     #icon;
     #turnCount;
     constructor(locationId, type, side, icon) {
         this.#locationId = locationId;
-        this.#isSelected = false;
         this.#type = type;
         this.#side = side;
         this.#icon = icon;
@@ -347,6 +320,37 @@ class Piece {
         }
     }
 
+    willPieceDefendKing(chessBoardObject) {
+        const movementSquares = chessBoardObject.getAllMovementSquares();
+        const validMovementSquares = [];
+
+        movementSquares.forEach(square => {
+
+            //Remove icon if it already has one
+            let removedPiece = undefined;
+            if(square.querySelector("img"))
+                removedPiece = chessBoardObject.removeObjectFromArray(square);
+
+            //append this piece to square
+            square.appendChild(this.icon);
+            
+            chessBoardObject.resetSquareColors();
+            //If not check then this square is valid
+            if(!chessBoardObject.isCheck())
+                validMovementSquares.push(square);
+
+            //Append the removed icon back
+            if(removedPiece) {
+                square.appendChild(removedPiece.icon);
+                chessBoardObject.piecesArray.push(removedPiece);
+            }
+        });
+        //Append the piece back to it´s original location.
+        document.getElementById(`${this.locationId}`).appendChild(this.icon);
+        //Finally we can display all validMovements
+        chessBoardObject.displayValidCheckDefendMovements(validMovementSquares);
+    }
+
     get type() {
         return this.#type;
     }
@@ -362,18 +366,12 @@ class Piece {
     set side(side) {
         this.#side = side;
     }
-    get isSelected() {
-        return this.#isSelected;
-    }
     get locationId() {
         return this.#locationId;
     }
     set locationId(locationId) {
         this.#locationId = locationId;
 
-    }
-    set isSelected(isSelected) {
-        this.#isSelected = isSelected;
     }
 
     set icon(icon) {
