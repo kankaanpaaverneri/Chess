@@ -12,6 +12,8 @@ const chessBoard = {
     check: false,
     checkMate: false,
     castleSquares: [],
+    pieceTypeOptionMenuDisplayed: false,
+    transformIcon: undefined,
 
     //Generate html for the chessboard squares
     initChessBoard: function() {
@@ -98,6 +100,9 @@ const chessBoard = {
             if(square.querySelector("img") === piece.icon && square.getAttribute("id") === piece.locationId)
                 return piece;
         });
+        if(!pieceToRemove)
+            return pieceToRemove;
+
         const index = this.piecesArray.indexOf(pieceToRemove);
         this.piecesArray.splice(index, 1);
         return pieceToRemove;
@@ -185,12 +190,15 @@ const chessBoard = {
             this.check = false;
             document.querySelector(".check").classList.add("hidden");
         }
+
+        if(this.selectedObject.type === "soldier")
+            this.isSoldierInEndSquare();
         this.selectedObject = undefined;
     },
 
 
 
-    createNewObject(locationId, pieceType, side, img) {
+    createNewObject(side, pieceType, locationId, img) {
         let piece;
         switch(pieceType) {
             case "soldier":
@@ -232,14 +240,14 @@ const chessBoard = {
             const [pieceType] = pieceTypes.filter(pieceType => {
                 if(img.getAttribute("src").includes(pieceType))
                     return pieceType;
-            })
+            });
 
             //Define initial locationId
             const locationId = img.closest(".square").getAttribute("id");
 
 
             //Create a new object
-            let piece = this.createNewObject(locationId, pieceType, side, img);
+            let piece = this.createNewObject(side, pieceType, locationId, img);
             this.piecesArray.push(piece);
         })
     },
@@ -293,6 +301,93 @@ const chessBoard = {
 
         return isCheckMate;
     },
+
+    generatePieceTypeOptionMenu() {
+        const pieceTypeOptionMenu = document.createElement("div");
+        pieceTypeOptionMenu.classList.add("piece-type-option-menu");
+        pieceTypeOptionMenu.classList.add("hidden");
+        document.querySelector("body").insertAdjacentElement("beforeend", pieceTypeOptionMenu);
+
+        console.log(pieceTypeOptionMenu);
+        const pieceTypes = ["tower", "horse", "bishop", "queen"];
+        for(let i = 0; i < pieceTypes.length; i++) {
+            const html = `
+            <div class="icon-container">
+            <img class="icon" src="icons/${pieceTypes[i]}_${this.turn === "white" ? "black" : "white"}.svg">
+            </div>`;
+            pieceTypeOptionMenu.insertAdjacentHTML("beforeend", html);
+        }
+    },
+
+    isSoldierInEndSquare() {
+        const [column, row] = this.selectedObject.getThisLocation();
+        if(column === 0 || column === 7) {
+            //If we are with the soldier at the end of the chessBoard
+            this.displayPieceTypeOptionMenu(this.selectedObject);
+        }
+    },
+
+    displayPieceTypeOptionMenu(soldier) {
+        this.generatePieceTypeOptionMenu();
+        const pieceTypeOptionMenu = document.querySelector(".piece-type-option-menu");
+        pieceTypeOptionMenu.classList.remove("hidden");
+        this.pieceTypeOptionMenuDisplayed = true;
+        soldier.transformPiece = true;
+    },
+
+    hidePieceTypeOptionMenu() {
+        const pieceTypeOptionMenu = document.querySelector(".piece-type-option-menu");
+        pieceTypeOptionMenu.parentNode.removeChild(pieceTypeOptionMenu);
+        pieceTypeOptionMenu.classList.add("hidden");
+        this.pieceTypeOptionMenuDisplayed = false;
+    },
+
+    transformSoldier(target) {
+        const iconContainer = target.closest(".icon-container");
+        if(!iconContainer)
+            return;
+
+        const soldierToTransform = this.piecesArray.find(piece => piece.transformPiece);
+        const soldierLocationSquare = document.getElementById(soldierToTransform.locationId);
+        this.removeObjectFromArray(soldierLocationSquare);
+
+        if(soldierToTransform) {
+            soldierToTransform.icon = iconContainer.querySelector("img");
+            soldierToTransform.transformIcon = false;
+            this.hidePieceTypeOptionMenu();
+            soldierLocationSquare.removeChild(soldierLocationSquare.querySelector("img"));
+
+            //Find out what type of object you need to create
+            const newPieceIcon = document.createElement("img");
+            newPieceIcon.src = iconContainer.querySelector("img").getAttribute("src");
+            soldierLocationSquare.appendChild(newPieceIcon);
+            const objectProperties = this.defineObjectProperties(soldierLocationSquare.querySelector("img"));
+            console.log(objectProperties);
+            const newPieceObject = this.createNewObject(...objectProperties, newPieceIcon);
+            console.log(newPieceObject);
+            this.piecesArray.push(newPieceObject);
+            
+
+        }
+    },
+
+    defineObjectProperties(icon) {
+        //Define piece side
+        const side = icon.getAttribute("src").includes("white") ? "white" : "black";
+
+         //Define pieceType
+         const pieceTypes = ["tower", "horse", "bishop", "king", "queen", "soldier"];
+         const [pieceType] = pieceTypes.filter(pieceType => {
+             if(icon.getAttribute("src").includes(pieceType))
+                 return pieceType;
+         });
+
+         //Define initial locationId
+         const locationId = icon.closest(".square").getAttribute("id");
+
+         return [side, pieceType, locationId];
+
+    }
 
 };
 
@@ -421,9 +516,19 @@ class Piece {
 }
 
 class Soldier extends Piece {
+    #transformPiece;
     constructor(locationId, type, side, icon)
     {
         super(locationId, type, side, icon);
+        this.#transformPiece = false;
+    }
+
+    get transformPiece() {
+        return this.#transformPiece;
+    }
+
+    set transformPiece(transfromPiece) {
+        this.#transformPiece = transfromPiece;
     }
 
     displayValidMovements() {
@@ -432,8 +537,10 @@ class Soldier extends Piece {
         const firstSquare = document.getElementById(`${this.side === "white" ? i-1 : i+1} ${j}`);
         const secondSquare = document.getElementById(`${this.side === "white" ? i-2 : i+2} ${j}`);
 
-        if(!firstSquare)
+        //switch soldier to a new object
+        if(!firstSquare) {       
             return;
+        }
 
         if(this.turnCount === 0 && chessBoard.isSquareEmpty(secondSquare) && chessBoard.isSquareEmpty(firstSquare))
             secondSquare.style.background = chessBoard.validMoveColor;
@@ -728,6 +835,11 @@ chessBoard.initPieceObjects();
 
 document.addEventListener("click", function(e) {
     e.preventDefault();
+
+    if(chessBoard.pieceTypeOptionMenuDisplayed) {
+        chessBoard.transformSoldier(e.target);
+    }
+
     if(chessBoard.selectedObject)
         chessBoard.movePiece(e.target);
     else

@@ -7,9 +7,7 @@ body {
     font-family: 'Gabarito', sans-serif;
 }
 
-.hidden {
-    display: none;
-}
+
 
 .header {
     display: flex;
@@ -37,4 +35,30 @@ body {
 
 .highlight-color {
     background-color: rgba(250, 253, 40, 0.5);
+}
+
+.piece-type-option-menu {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background: rgba(131, 127, 127, 0.5);
+    width: 30%;
+    height: 30%;
+    
+}
+
+.icon {
+    cursor: pointer;
+    width: 5rem;
+    height: auto;
+}
+
+.icon:hover {
+    background: white;
+    transition: 0.5s;
+}
+
+.hidden {
+    display: none;
 }
