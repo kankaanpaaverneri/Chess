@@ -68,7 +68,7 @@ const chessBoard = {
 
         if(pieceObject.type === "king") {
             pieceObject.removeKingsCheckSquares();
-            this.castleSquares = pieceObject.displayCastle(this);
+            this.castleSquares = pieceObject.displayCastleMoves(this);
         }
 
         
@@ -125,7 +125,6 @@ const chessBoard = {
     eating(square) {
         if(square.style.background === this.validEatColor) {
             const removedPiece = this.removeObjectFromArray(square);
-            console.log(removedPiece);
             square.append(this.selectedObject.icon);
             square.removeChild(square.querySelector("img"));
             this.selectedObject.locationId = square.getAttribute("id");
@@ -251,18 +250,20 @@ const chessBoard = {
         let isCheck = false;
         
         this.piecesArray.forEach(piece => {
-            //Highlight piece ValidMovements
-            piece.displayValidMovements();
+            if(piece.side !== this.turn) {
+                //Highlight piece ValidMovements
+                piece.displayValidMovements();
 
-            //Loop through all squares and find out if any of them have validEatColor and king
-            const squares = document.querySelectorAll(".square");
-            squares.forEach(square => {
-                if(square.style.background === this.validEatColor && this.isKing(square)) {
-                    isCheck = true;
-                }
-            });
+                //Loop through all squares and find out if any of them have validEatColor and king
+                const squares = document.querySelectorAll(".square");
+                squares.forEach(square => {
+                    if(square.style.background === this.validEatColor && this.isKing(square)) {
+                        isCheck = true;
+                    }
+                });
 
-            this.resetSquareColors();
+                this.resetSquareColors();
+            }
         });
         return isCheck;
     },
@@ -570,6 +571,20 @@ class King extends Piece {
         
     }
 
+    removeKingsCheckSquares() {
+        const checkSquares = this.getCheckSquares();
+            
+        if(checkSquares.length > 0) {
+            this.displayValidMovements();
+            checkSquares.forEach(square => {
+                const [column, row] = square.getAttribute("id").split(" ");
+                square.style.background = chessBoard.squareColors[column][row];
+            })
+        } else {
+            this.displayValidMovements();
+        }
+    }
+
     getCheckSquares() {
         //This function expects that the kings moves are highlighted in the board
         const checkSquares = [];
@@ -597,34 +612,24 @@ class King extends Piece {
 
             //if there is a icon in the movementSquare, remove it temporarily.
             let removedPiece = undefined;
-            if(movementSquare.querySelector("img"))
+            if(movementSquare.querySelector("img")) {
                 removedPiece = this.removeIconTemporarily(movementSquare);
-
+            }
             //Append king to movementSquare
             movementSquare.appendChild(this.icon);
 
-            //Check with every opposite side piece that if they threaten appended king
-            this.checkForThreatsToKing(movementSquare, checkSquares, removedPiece);
+            //Check with every opposite side piece that if they threaten the appended king
+            if(!this.isSquareSafe(movementSquare, chessBoard))
+                checkSquares.push(movementSquare);
 
             //Remove appended king
             document.getElementById(this.locationId).appendChild(this.icon);
             if(removedPiece)
                 this.appendBackRemovedPiece(removedPiece);
         });
+        return checkSquares;
     }
-
-    checkForThreatsToKing(movementSquare, checkSquares, removedPiece) {
-        chessBoard.piecesArray.forEach(piece => {
-            if(piece.side !== this.side && piece !== removedPiece)
-                piece.displayValidMovements();
-
-            if(movementSquare.style.background === chessBoard.validEatColor) {
-                checkSquares.push(movementSquare);
-            }
-            chessBoard.resetSquareColors();
-        });
-    }
-
+    
     removeIconTemporarily(square) {
         const piece = chessBoard.piecesArray.find(piece => {
             if(piece.icon === square.querySelector("img"))
@@ -639,21 +644,7 @@ class King extends Piece {
         document.getElementById(`${locationId}`).appendChild(removedPiece.icon);
     }
 
-    removeKingsCheckSquares() {
-        const checkSquares = this.getCheckSquares();
-            
-        if(checkSquares.length > 0) {
-            this.displayValidMovements();
-            checkSquares.forEach(square => {
-                const [column, row] = square.getAttribute("id").split(" ");
-                square.style.background = chessBoard.squareColors[column][row];
-            })
-        } else {
-            this.displayValidMovements();
-        }
-    }
-
-    displayCastle(chessBoardObject) {
+    displayCastleMoves(chessBoardObject) {
         let castleSquares = [];
         if(this.turnCount === 0) {
             const [thisPositionColumn, thisPositionRow] = this.getThisLocation();
