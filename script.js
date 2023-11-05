@@ -13,7 +13,6 @@ const chessBoard = {
     checkMate: false,
     castleSquares: [],
     pieceTypeOptionMenuDisplayed: false,
-    transformIcon: undefined,
 
     //Generate html for the chessboard squares
     initChessBoard: function() {
@@ -153,7 +152,6 @@ const chessBoard = {
             if(piece.icon === towerSquare.querySelector("img") && piece.locationId === towerSquare.getAttribute("id"))
                 return piece;
         });
-        console.log(tower);
 
         towerMovementSquare.appendChild(tower.icon);
         tower.locationId = towerMovementSquare.getAttribute("id");
@@ -228,26 +226,11 @@ const chessBoard = {
         const imgs = document.querySelectorAll("img");
         imgs.forEach(img => {
 
-            //Define piece side
-            let side;
-            if(img.getAttribute("src").includes("black"))
-                side = "black";
-            else if(img.getAttribute("src").includes("white"))
-                side = "white";
-
-            //Define pieceType
-            const pieceTypes = ["tower", "horse", "bishop", "king", "queen", "soldier"];
-            const [pieceType] = pieceTypes.filter(pieceType => {
-                if(img.getAttribute("src").includes(pieceType))
-                    return pieceType;
-            });
-
-            //Define initial locationId
-            const locationId = img.closest(".square").getAttribute("id");
+            const objectProperties = this.defineObjectProperties(img);
 
 
             //Create a new object
-            let piece = this.createNewObject(side, pieceType, locationId, img);
+            let piece = this.createNewObject(...objectProperties, img);
             this.piecesArray.push(piece);
         })
     },
@@ -308,7 +291,6 @@ const chessBoard = {
         pieceTypeOptionMenu.classList.add("hidden");
         document.querySelector("body").insertAdjacentElement("beforeend", pieceTypeOptionMenu);
 
-        console.log(pieceTypeOptionMenu);
         const pieceTypes = ["tower", "horse", "bishop", "queen"];
         for(let i = 0; i < pieceTypes.length; i++) {
             const html = `
@@ -362,12 +344,8 @@ const chessBoard = {
             newPieceIcon.src = iconContainer.querySelector("img").getAttribute("src");
             soldierLocationSquare.appendChild(newPieceIcon);
             const objectProperties = this.defineObjectProperties(soldierLocationSquare.querySelector("img"));
-            console.log(objectProperties);
             const newPieceObject = this.createNewObject(...objectProperties, newPieceIcon);
-            console.log(newPieceObject);
             this.piecesArray.push(newPieceObject);
-            
-
         }
     },
 
