@@ -11,7 +11,7 @@ const chessBoard = {
     validEatColor: "red",
     check: false,
     checkMate: false,
-    castleSquare: undefined,
+    castleSquares: [],
 
     //Generate html for the chessboard squares
     initChessBoard: function() {
@@ -68,7 +68,7 @@ const chessBoard = {
 
         if(pieceObject.type === "king") {
             pieceObject.removeKingsCheckSquares();
-            this.castleSquare = pieceObject.displayCastle(this);
+            this.castleSquares = pieceObject.displayCastle(this);
         }
 
         
@@ -138,7 +138,7 @@ const chessBoard = {
 
     castle(square) {
 
-        if(!this.castleSquare)
+        if(this.castleSquares.length === 0)
             return;
 
         //Assumes that tower is in place
@@ -165,7 +165,7 @@ const chessBoard = {
 
 
         //Castle
-        if(square.style.background === this.validMoveColor)
+        if(square === this.castleSquares[1] && square.style.background === this.validMoveColor)
             this.castle(square);
 
         //Moving
@@ -654,29 +654,29 @@ class King extends Piece {
     }
 
     displayCastle(chessBoardObject) {
-        let castleSquare = undefined;
+        let castleSquares = [];
         if(this.turnCount === 0) {
             const [thisPositionColumn, thisPositionRow] = this.getThisLocation();
             const castleSquareNear = document.getElementById(`${thisPositionColumn} ${thisPositionRow - 1}`);
             const castleSquareFar = document.getElementById(`${thisPositionColumn} ${thisPositionRow - 2}`);
             if(!chessBoardObject.isSquareEmpty(castleSquareNear) || !chessBoardObject.isSquareEmpty(castleSquareFar)) {
                 this.displayValidMovements();
-                return;
+                return castleSquares;
             }
             if(!this.isSquareSafe(castleSquareNear, chessBoardObject)) {
                 this.displayValidMovements();
-                return;
+                return castleSquares;
             }
             if(!this.isSquareSafe(castleSquareFar, chessBoardObject)) {
                 this.displayValidMovements();
-                return;
+                return castleSquares;
             }
 
             castleSquareFar.style.background = chessBoardObject.validMoveColor;
             this.displayValidMovements();
-            castleSquare = castleSquareNear;
+            castleSquares = [castleSquareNear, castleSquareFar];
         }
-        return castleSquare;
+        return castleSquares;
     }
 
     isSquareSafe(square, chessBoardObject) {
