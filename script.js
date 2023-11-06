@@ -177,6 +177,9 @@ const chessBoard = {
         this.eating(square);
 
 
+        if(this.selectedObject.type === "soldier")
+            this.isSoldierInEndSquare();
+
         //Check
         if(this.isCheck() === true) {
             this.check = true;
@@ -188,9 +191,6 @@ const chessBoard = {
             this.check = false;
             document.querySelector(".check").classList.add("hidden");
         }
-
-        if(this.selectedObject.type === "soldier")
-            this.isSoldierInEndSquare();
         this.selectedObject = undefined;
     },
 
@@ -731,10 +731,11 @@ class King extends Piece {
 
     displayCastleMoves(chessBoardObject) {
         let castleSquares = [];
-        if(this.turnCount === 0) {
+        if(this.turnCount === 0 && !chessBoardObject.check) {
             const [thisPositionColumn, thisPositionRow] = this.getThisLocation();
             const castleSquareNear = document.getElementById(`${thisPositionColumn} ${thisPositionRow - 1}`);
             const castleSquareFar = document.getElementById(`${thisPositionColumn} ${thisPositionRow - 2}`);
+            const castleSquareTower = document.getElementById(`${thisPositionColumn} ${thisPositionRow -3}`);
             if(!chessBoardObject.isSquareEmpty(castleSquareNear) || !chessBoardObject.isSquareEmpty(castleSquareFar)) {
                 this.displayValidMovements();
                 return castleSquares;
@@ -748,11 +749,24 @@ class King extends Piece {
                 return castleSquares;
             }
 
-            castleSquareFar.style.background = chessBoardObject.validMoveColor;
+            //Checks if there is a tower and if it has moved
+            if(castleSquareTower.querySelector("img")?.getAttribute("src").includes(`tower_${this.side}.svg`) &&
+                this.isTowerMoved(castleSquareTower.querySelector("img"), castleSquareTower, chessBoardObject)) {
+                castleSquareFar.style.background = chessBoardObject.validMoveColor;
+                castleSquares = [castleSquareNear, castleSquareFar];
+            }
             this.displayValidMovements();
-            castleSquares = [castleSquareNear, castleSquareFar];
         }
         return castleSquares;
+    }
+
+    isTowerMoved(towerIcon, towerSquare, chessBoardObject) {
+        const towerObject = chessBoardObject.piecesArray.find(piece => {
+            if(piece.icon === towerIcon && piece.locationId === towerSquare.getAttribute("id"))
+                return piece;
+        });
+
+        return towerObject.turnCount > 0 ? false : true;
     }
 
     isSquareSafe(square, chessBoardObject) {
