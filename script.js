@@ -181,6 +181,12 @@ const chessBoard = {
             this.isSoldierInEndSquare();
 
         //Check
+        this.checkCheckStatus();
+
+        this.selectedObject = undefined;
+    },
+
+    checkCheckStatus() {
         if(this.isCheck() === true) {
             this.check = true;
             document.querySelector(".check").classList.remove("hidden");
@@ -191,7 +197,6 @@ const chessBoard = {
             this.check = false;
             document.querySelector(".check").classList.add("hidden");
         }
-        this.selectedObject = undefined;
     },
 
 
@@ -346,6 +351,8 @@ const chessBoard = {
             const objectProperties = this.defineObjectProperties(soldierLocationSquare.querySelector("img"));
             const newPieceObject = this.createNewObject(...objectProperties, newPieceIcon);
             this.piecesArray.push(newPieceObject);
+
+            this.checkCheckStatus();
         }
     },
 
