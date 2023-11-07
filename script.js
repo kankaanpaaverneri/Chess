@@ -181,6 +181,9 @@ const chessBoard = {
         //Check
         this.checkCheckStatus();
 
+        if(this.isCheckMate())
+            document.querySelector(".check").textContent = "CHECKMATE";
+
         this.selectedObject = undefined;
     },
 
@@ -196,8 +199,6 @@ const chessBoard = {
         if(this.isCheck() === true) {
             this.check = true;
             document.querySelector(".check").classList.remove("hidden");
-            if(this.isCheckMate())
-                document.querySelector(".check").textContent = "CHECKMATE";
         }
         else {
             this.check = false;
