@@ -107,15 +107,6 @@ const chessBoard = {
         return pieceToRemove;
     },
 
-    displayValidCheckDefendMovements(validMovementSquares) {
-        validMovementSquares.forEach(square => {
-            if(square.querySelector("img"))
-                square.style.background = this.validEatColor;
-            else
-                square.style.background = this.validMoveColor;
-        });
-    },
-
     movement(square) {
         if(square.style.background === this.validMoveColor) {
             square.append(this.selectedObject.icon);
@@ -127,7 +118,7 @@ const chessBoard = {
     },
 
     eating(square) {
-        if(square.style.background === this.validEatColor) {
+        if(square.style.background === this.validEatColor && square.querySelector("img")) {
             const removedPiece = this.removeObjectFromArray(square);
             square.append(this.selectedObject.icon);
             square.removeChild(square.querySelector("img"));
@@ -136,6 +127,9 @@ const chessBoard = {
             this.selectedObject.turnCount++;
             document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
             this.resetSquareColors();
+        } else if(square.style.background === this.validEatColor) {
+            //EnPassant
+            this.enPassant(square);
         }
     },
 
@@ -173,6 +167,10 @@ const chessBoard = {
         //Moving
         this.movement(square);
 
+        //Is movement to secondSquare has been made
+        if(this.selectedObject.turnCount === 1)
+            this.isSoldierInSecondSquare();
+
         //Eating
         this.eating(square);
 
@@ -184,6 +182,14 @@ const chessBoard = {
         this.checkCheckStatus();
 
         this.selectedObject = undefined;
+    },
+
+    isSoldierInSecondSquare() {
+        if(this.selectedObject.locationId === this.selectedObject.secondSquare?.getAttribute("id")) {
+            this.selectedObject.pieceIsInSecondSquare = true;
+        } else if(this.selectedObject.locationId === this.selectedObject.secondSquare?.getAttribute("id") && this.selectedObject.pieceIsInSecondSquare === true) {
+            this.selectedObject.pieceIsInSecondSquare = false;
+        }
     },
 
     checkCheckStatus() {
@@ -372,6 +378,41 @@ const chessBoard = {
 
          return [side, pieceType, locationId];
 
+    },
+
+    findObjectFromArray(square, icon) {
+        return this.piecesArray.find(piece => {
+            if(piece.icon === icon && piece.locationId === square.getAttribute("id"))
+                return piece;
+        });
+    },
+
+    displayValidCheckDefendMovements(validMovementSquares, redSquares) {
+        validMovementSquares.forEach(square => {
+            if(square.querySelector("img"))
+                square.style.background = this.validEatColor;
+            else
+                square.style.background = this.validMoveColor;
+            
+            redSquares.forEach(redSquare => {
+                if(redSquare === square) {
+                    square.style.background = this.validEatColor;
+                }
+            })
+        });
+    },
+
+    enPassant(square) {
+        square.append(this.selectedObject.icon);
+        this.selectedObject.locationId = square.getAttribute("id");
+        const [column, row] = this.selectedObject.getThisLocation();
+        chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
+        this.selectedObject.turnCount++;
+        document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
+        const enemySquare = document.getElementById(`${this.selectedObject.side === "white" ? column + 1 : column - 1} ${row}`);
+        this.removeObjectFromArray(enemySquare);
+        enemySquare.removeChild(enemySquare.querySelector("img"));
+        this.resetSquareColors();
     }
 
 };
@@ -433,6 +474,9 @@ class Piece {
         const movementSquares = chessBoardObject.getAllMovementSquares();
         const validMovementSquares = [];
 
+        //Need to save redSquares for displayValidCheckDefendMovements function
+        const redSquares = this.getAllRedSquares(movementSquares, chessBoardObject);
+
         movementSquares.forEach(square => {
 
             //Remove icon if it already has one
@@ -442,7 +486,7 @@ class Piece {
 
             //append this piece to square
             square.appendChild(this.icon);
-            
+
             chessBoardObject.resetSquareColors();
             //If not check then this square is valid
             if(!chessBoardObject.isCheck())
@@ -457,8 +501,19 @@ class Piece {
         //Append the piece back to it´s original location.
         document.getElementById(`${this.locationId}`).appendChild(this.icon);
         //Finally we can display all validMovements
-        chessBoardObject.displayValidCheckDefendMovements(validMovementSquares);
+        chessBoardObject.displayValidCheckDefendMovements(validMovementSquares, redSquares);
     }
+
+    getAllRedSquares(squares, chessBoardObject) {
+        const redSquares = [];
+        squares.forEach(square => {
+            if(square.style.background === chessBoardObject.validEatColor)
+                redSquares.push(square);
+        });
+        return redSquares;
+    }
+
+    
 
     get type() {
         return this.#type;
@@ -502,18 +557,53 @@ class Piece {
 
 class Soldier extends Piece {
     #transformPiece;
+    #enPassant;
+    #secondSquare;
+    #pieceIsInSecondSquare;
     constructor(locationId, type, side, icon)
     {
         super(locationId, type, side, icon);
         this.#transformPiece = false;
+        this.#enPassant = false;
+        this.#pieceIsInSecondSquare = false;
+        this.#secondSquare = this.defineSecondSquare();
     }
 
     get transformPiece() {
         return this.#transformPiece;
     }
 
+    get enPassant() {
+        return this.#enPassant;
+    }
+
+    get pieceIsInSecondSquare() {
+        return this.#pieceIsInSecondSquare;
+    }
+
+    get secondSquare() {
+        return this.#secondSquare;
+    }
+
     set transformPiece(transfromPiece) {
         this.#transformPiece = transfromPiece;
+    }
+
+    set enPassant(enPassant) {
+        this.#enPassant = enPassant;
+    }
+
+    set pieceIsInSecondSquare(pieceIsInSecondSquare) {
+        this.#pieceIsInSecondSquare = pieceIsInSecondSquare;
+    }
+    
+    set secondSquare(secondSquare) {
+        this.#secondSquare = secondSquare;
+    }
+
+    defineSecondSquare() {
+        const [i, j] = this.getThisLocation();
+        return document.getElementById(`${this.side === "white" ? i-2 : i+2} ${j}`);
     }
 
     displayValidMovements() {
@@ -527,12 +617,12 @@ class Soldier extends Piece {
             return;
         }
 
-        if(this.turnCount === 0 && chessBoard.isSquareEmpty(secondSquare) && chessBoard.isSquareEmpty(firstSquare))
+        if(this.turnCount === 0 && chessBoard.isSquareEmpty(secondSquare) && chessBoard.isSquareEmpty(firstSquare)) {
             secondSquare.style.background = chessBoard.validMoveColor;
+        }
 
         if (chessBoard.isSquareEmpty(firstSquare))
             firstSquare.style.background = chessBoard.validMoveColor;
-
         
         const rightCorner = this.side === "white" ?
             document.getElementById(`${i-1} ${j+1}`) : document.getElementById(`${i+1} ${j-1}`);
@@ -545,6 +635,73 @@ class Soldier extends Piece {
 
         if(rightCorner?.querySelector("img") && !this.isOwnUnit(rightCorner))
             rightCorner.style.background = chessBoard.validEatColor;
+        
+        const piecesMovedTwoSquares = this.isEnPassantPossible();
+        if(piecesMovedTwoSquares.length > 0)
+        {
+            this.displayEnPassantMoves(piecesMovedTwoSquares);
+        }
+        
+    }
+
+    displayEnPassantMoves(piecesMovedTwoSquares) {
+        piecesMovedTwoSquares.forEach(piece => {
+            const [column, row] = piece.getThisLocation();
+            const square = document.getElementById(`${piece.side === "white" ? column + 1 : column - 1} ${row}`);
+            if(square) {
+                square.style.background = chessBoard.validEatColor;
+            }
+        })
+    }
+
+    isEnPassantPossible() {
+        const [column, row] = this.getThisLocation();
+        if((column === 3 && this.side === "white") || (column === 4 && this.side === "black")) {
+            //Returns array of squares of which have soldier in them
+            const leftAndRightSquaresArray = this.isEnemySoldierNext(column, row);
+            return this.hasSoldierMovedTwoSquares(leftAndRightSquaresArray);
+        }
+        
+        return false;
+    }
+
+    
+
+    isEnemySoldierNext(column, row) {
+        const leftSquare = document.getElementById(`${column} ${row - 1}`);
+        const rightSquare = document.getElementById(`${column} ${row + 1}`);
+
+        const leftAndRightSquares = [];
+
+        const leftIcon = leftSquare?.querySelector("img");
+        const rightIcon = rightSquare?.querySelector("img");
+
+        if(leftIcon && leftIcon.getAttribute("src").includes("soldier") && this.getSoldierSide(leftIcon) !== this.side)
+            leftAndRightSquares.push(leftSquare);
+
+        if(rightIcon && rightIcon.getAttribute("src").includes("soldier") && this.getSoldierSide(rightIcon) !== this.side)
+            leftAndRightSquares.push(rightSquare);
+
+        return leftAndRightSquares;
+    }
+
+    hasSoldierMovedTwoSquares(leftAndRightSquares) {
+        let piecesMovedTwoSquares = [];
+        //If empty return false
+        if(leftAndRightSquares.length === 0)
+            return piecesMovedTwoSquares;
+
+        //Otherwise find right object for icon and check if it has enPassant property true
+        leftAndRightSquares.forEach(square => {
+            const pieceObject = chessBoard.findObjectFromArray(square, square.querySelector("img"));
+            if(pieceObject?.pieceIsInSecondSquare === true)
+                piecesMovedTwoSquares.push(pieceObject);
+        });
+        return piecesMovedTwoSquares;
+    }
+
+    getSoldierSide(icon) {
+        return icon.getAttribute("src").includes("white") ? "white" : "black";
     }
 }
 
