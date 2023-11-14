@@ -7,6 +7,14 @@ body {
     font-family: 'Gabarito', sans-serif;
 }
 
+h1, h2, span {
+    font-size: 20px;
+}
+
+#chess {
+    font-size: 25px;
+    font-weight: bold;
+}
 
 
 .header {
@@ -14,8 +22,6 @@ body {
     flex-direction: column;
     text-align: center;
 }
-
-
 
 .chessboard-container {
     display: grid;
@@ -33,21 +39,6 @@ body {
     height: 5rem;
 }
 
-.highlight-color {
-    background-color: rgba(250, 253, 40, 0.5);
-}
-
-.piece-type-option-menu {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    background: rgba(131, 127, 127, 0.5);
-    width: 30%;
-    height: 30%;
-    
-}
-
 .icon {
     cursor: pointer;
     width: 5rem;
@@ -57,6 +48,34 @@ body {
 .icon:hover {
     background: white;
     transition: 0.5s;
+}
+
+
+@media screen and (min-width: 1000px) {
+    .square {
+        width: 4rem;
+        height: 4rem;
+    }
+
+    .piece-type-option-menu {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        background: rgba(131, 127, 127, 0.5);
+        width: 20%;
+        height: 20%;
+        
+    }
+    .icon {
+        cursor: pointer;
+        width: 4rem;
+        height: auto;
+    }
+}
+
+.highlight-color {
+    background-color: rgba(250, 253, 40, 0.5);
 }
 
 .hidden {
