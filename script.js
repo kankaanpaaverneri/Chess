@@ -1,5 +1,7 @@
 "use strict"
 
+const mainMenu = new MainMenu(chessBoard);
+
 //Initialize chessboard, icons and all Piece objects 
 chessBoard.initChessBoard();
 chessBoard.addIconsToBoard();
@@ -7,14 +9,19 @@ chessBoard.initPieceObjects();
 
 // Handle click events
 document.addEventListener("click", function(e) {
-    e.preventDefault();
+
+    if(mainMenu.modalWindowDisplayed) return;
 
     if(chessBoard.pieceTypeOptionMenuDisplayed) {
         chessBoard.transformSoldier(e.target);
+        return;
+    }
+    
+    if(chessBoard.selectedObject) {
+        chessBoard.movePiece(e.target);
+        if(chessBoard.isComputersTurn(mainMenu))
+            console.log("Computer's turn");
     } else {
-        if(chessBoard.selectedObject)
-            chessBoard.movePiece(e.target);
-        else
-            chessBoard.selectedObject = chessBoard.selectPiece(e.target);
+        chessBoard.selectedObject = chessBoard.selectPiece(e.target);
     }
 });

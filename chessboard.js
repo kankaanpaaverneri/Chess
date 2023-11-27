@@ -411,6 +411,14 @@ const chessBoard = {
         this.removeObjectFromArray(enemySquare);
         enemySquare.removeChild(enemySquare.querySelector("img"));
         this.resetSquareColors();
+    },
+
+    isComputersTurn(mainMenu) {
+        if(mainMenu.opponent.type === "computer" && this.turn === mainMenu.opponentSide) {
+            return true;
+        }
+
+        return false;
     }
 
 };

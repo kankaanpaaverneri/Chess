@@ -1,42 +1,45 @@
 "use strict"
 
-//Choose opponent
-const modalWindow = {
-    modal: document.querySelector(".modal-window"),
-    humanButton: document.getElementById("human-button"),
-    computerButton: document.getElementById("computer-button"),
-    isDisplayed: false,
-    radioButtonWhite: document.getElementById("side_white"),
-    radioButtonBlack: document.getElementById("side_black"),
-    okButton: document.querySelector(".ok-button")
-};
+
 
 class MainMenu {
     #opponent;
     #opponentSide;
     #player;
     #playerSide;
+    #modalWindowDisplayed;
 
-    constructor(modalWindow) {
+    constructor(chessBoard) {
+
+        //Choose opponent
+        const modalWindow = {
+            modal: document.querySelector(".modal-window"),
+            humanButton: document.getElementById("human-button"),
+            computerButton: document.getElementById("computer-button"),
+            radioButtonWhite: document.getElementById("white-side-button"),
+            radioButtonBlack: document.getElementById("black-side-button"),
+            startGameButton: document.querySelector(".start-game-button")
+        };
+
         modalWindow.modal.classList.remove("hidden");
-        modalWindow.isDisplayed = true;
-        console.log(modalWindow);
+        this.#modalWindowDisplayed = true;
         this.addBlur(true);
         
-        modalWindow.okButton.addEventListener("click", this.startGame.bind(this, modalWindow));
+        modalWindow.startGameButton.addEventListener("click", this.startGame.bind(this, modalWindow, chessBoard));
     }
 
-    startGame(modalWindow) {
+    startGame(modalWindow, chessBoard) {
         if((modalWindow.radioButtonWhite.checked || modalWindow.radioButtonBlack.checked) &&
             (modalWindow.humanButton.checked || modalWindow.computerButton.checked)) {
             modalWindow.modal.classList.add("hidden");
-            modalWindow.isDisplayed = false;
+            this.#modalWindowDisplayed = false;
             this.defineOpponent(modalWindow);
             const humanPlayer = new Human(1, this);
             const secondPlayer = modalWindow.computerButton.checked ? new Computer(2, this) : new Human(2, this);
             this.#player = humanPlayer;
             this.#opponent = secondPlayer;
-            if(chessBoard.isComputersTurn(mainMenu)) {
+            console.log(this);
+            if(chessBoard.isComputersTurn(this)) {
                 console.log("Computer's turn");
             }
             this.addBlur(false);
@@ -91,6 +94,10 @@ class MainMenu {
         return this.#player;
     }
 
+    get modalWindowDisplayed() {
+        return this.#modalWindowDisplayed;
+    }
+
     set opponentSide(opponentSide) {
         this.#opponentSide = opponentSide;
     }
@@ -105,5 +112,9 @@ class MainMenu {
 
     set player(player) {
         this.#player = player;
+    }
+
+    set modalWindowDisplayed(modalWindowDisplayed) {
+        this.#modalWindowDisplayed = modalWindowDisplayed;
     }
 }
