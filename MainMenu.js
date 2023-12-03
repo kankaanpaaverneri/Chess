@@ -1,7 +1,5 @@
 "use strict"
 
-
-
 class MainMenu {
     #opponent;
     #opponentSide;
@@ -24,6 +22,10 @@ class MainMenu {
         modalWindow.modal.classList.remove("hidden");
         this.#modalWindowDisplayed = true;
         this.addBlur(true);
+
+        //Initialize chessboard, icons and all Piece objects 
+        chessBoard.createChessBoard();
+        chessBoard.addIconsToBoard();
         
         modalWindow.startGameButton.addEventListener("click", this.startGame.bind(this, modalWindow, chessBoard));
     }
@@ -43,6 +45,7 @@ class MainMenu {
                 console.log("Computer's turn");
             }
             this.addBlur(false);
+            chessBoard.initPieceObjects(mainMenu);
         }
     }
 

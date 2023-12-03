@@ -2,26 +2,26 @@
 
 const mainMenu = new MainMenu(chessBoard);
 
-//Initialize chessboard, icons and all Piece objects 
-chessBoard.initChessBoard();
-chessBoard.addIconsToBoard();
-chessBoard.initPieceObjects();
-
 // Handle click events
 document.addEventListener("click", function(e) {
 
-    if(mainMenu.modalWindowDisplayed) return;
+    if(mainMenu.modalWindowDisplayed)
+        return;
 
+    //If need to transform soldier
     if(chessBoard.pieceTypeOptionMenuDisplayed) {
-        chessBoard.transformSoldier(e.target);
+        chessBoard.transformSoldier(e.target, mainMenu);
         return;
     }
     
-    if(chessBoard.selectedObject) {
-        chessBoard.movePiece(e.target);
-        if(chessBoard.isComputersTurn(mainMenu))
-            console.log("Computer's turn");
-    } else {
+    //Handle icon selection
+    if(!chessBoard.selectedObject) {
         chessBoard.selectedObject = chessBoard.selectPiece(e.target);
+        return;
     }
+
+    //Handle icon movement
+    chessBoard.movePieceToClickedSquare(e.target);
+    if(chessBoard.isComputersTurn(mainMenu))
+        console.log("Computer's turn");
 });

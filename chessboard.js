@@ -51,39 +51,41 @@ const chessBoard = {
         }
     },
 
+    findClickedPiece(target) {
+        return this.piecesArray.find(piece => {
+            if(piece.icon === target && piece.icon.getAttribute("src").includes(`${this.turn}`))
+                return piece;
+        });
+    },
+
     selectPiece: function (target) {
         this.resetSquareColors();
         this.selectedObject = undefined;
 
         //Find right pieceObject
-        const pieceObject = this.piecesArray.find(piece => {
-            if(piece.icon === target && piece.icon.getAttribute("src").includes(`${this.turn}`)) return piece;
-        });
+        const piece = this.findClickedPiece(target);
+        console.log(piece);
 
-        if(!pieceObject)
-            return null;
+        if(!piece) return null;
 
+        piece.displayValidMovements();
 
-        pieceObject.displayValidMovements();
-
-        if(pieceObject.type === "king") {
-            pieceObject.removeKingsCheckSquares();
-            this.castleSquares = pieceObject.displayCastleMoves(this);
+        if(piece.type === "king") {
+            piece.removeKingsCheckSquares();
+            this.castleSquares = piece.displayCastleMoves(this);
         }
 
-        
-        pieceObject.willPieceDefendKing(this);
+        piece.willPieceDefendKing(this);
 
         //Highlight selected square
         target.closest(".square").style.background = this.selectionColor;
-        return pieceObject;
+        return piece;
     },
 
     
 
-    getAllMovementSquares() {
+    getAllMovementSquares(squares) {
         const movementSquares = [];
-        const squares = document.querySelectorAll(".square");
         squares.forEach(square => {
             if(square.style.background === this.validEatColor || square.style.background === this.validMoveColor) {
                 movementSquares.push(square);
@@ -110,10 +112,9 @@ const chessBoard = {
         if(square.style.background === this.validMoveColor) {
             square.append(this.selectedObject.icon);
             this.selectedObject.locationId = square.getAttribute("id");
-            chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
-            this.selectedObject.turnCount++;
-            document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
+            return true;
         }
+        return false;
     },
 
     eating(square) {
@@ -122,14 +123,14 @@ const chessBoard = {
             square.append(this.selectedObject.icon);
             square.removeChild(square.querySelector("img"));
             this.selectedObject.locationId = square.getAttribute("id");
-            chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
-            this.selectedObject.turnCount++;
-            document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
             this.resetSquareColors();
+            return true;
         } else if(square.style.background === this.validEatColor) {
             //EnPassant
             this.enPassant(square);
+            return true;
         }
+        return false;
     },
 
     castle(square) {
@@ -151,34 +152,48 @@ const chessBoard = {
         tower.turnCount++;
     },
 
-    movePiece(target) {
+    switchTurn() {
+        this.turn = this.turn === "white" ? "black" : "white";
+        this.selectedObject.turnCount++;
+        document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
+    },
+
+    movePieceToClickedSquare(target) {
         const square = target.closest(".square");
         if(!square) {
             this.resetSquareColors();
             return;
         }
 
+        this.movePiece(square);
+    },
+
+    movePiece(square) {
 
         //Castle
         if(square === this.castleSquares[1] && square.style.background === this.validMoveColor)
             this.castle(square);
 
         //Moving
-        this.movement(square);
+        if(this.movement(square)) {
+            this.switchTurn();
+        }
 
         //Is movement to secondSquare has been made
         if(this.selectedObject.turnCount === 1)
-            this.isSoldierInSecondSquare();
+            this.selectedObject.pieceIsInSecondSquare = this.isSoldierInSecondSquare();
 
         //Eating
-        this.eating(square);
+        if(this.eating(square)) {
+            this.switchTurn();
+        }
 
-
+        //Is soldier in end square
         if(this.selectedObject.type === "soldier")
             this.isSoldierInEndSquare();
 
         //Check
-        this.checkCheckStatus();
+        this.displayCheckStatus();
 
         if(this.isCheckMate())
             document.querySelector(".check").textContent = "CHECKMATE";
@@ -188,13 +203,13 @@ const chessBoard = {
 
     isSoldierInSecondSquare() {
         if(this.selectedObject.locationId === this.selectedObject.secondSquare?.getAttribute("id")) {
-            this.selectedObject.pieceIsInSecondSquare = true;
+            return true;
         } else if(this.selectedObject.locationId === this.selectedObject.secondSquare?.getAttribute("id") && this.selectedObject.pieceIsInSecondSquare === true) {
-            this.selectedObject.pieceIsInSecondSquare = false;
+            return false;
         }
     },
 
-    checkCheckStatus() {
+    displayCheckStatus() {
         if(this.isCheck() === true) {
             this.check = true;
             document.querySelector(".check").classList.remove("hidden");
@@ -207,39 +222,39 @@ const chessBoard = {
 
 
 
-    createNewObject(side, pieceType, locationId, img) {
+    createNewObject(side, pieceType, locationId, img, mainMenu) {
         let piece;
         switch(pieceType) {
             case "soldier":
-                piece = new Soldier(locationId, pieceType, side, img);
+                piece = new Soldier(locationId, pieceType, side, img, mainMenu);
                 break;
             case "tower":
-                piece = new Tower(locationId, pieceType, side, img);
+                piece = new Tower(locationId, pieceType, side, img, mainMenu);
                 break;
             case "horse":
-                piece = new Horse(locationId, pieceType, side, img);
+                piece = new Horse(locationId, pieceType, side, img, mainMenu);
                 break;
             case "bishop":
-                piece = new Bishop(locationId, pieceType, side, img);
+                piece = new Bishop(locationId, pieceType, side, img, mainMenu);
                 break;
             case "king":
-                piece = new King(locationId, pieceType, side, img);
+                piece = new King(locationId, pieceType, side, img, mainMenu);
                 break;
             case "queen":
-                piece = new Queen(locationId, pieceType, side, img);
+                piece = new Queen(locationId, pieceType, side, img, mainMenu);
                 break; 
         }
         return piece;
     },
 
     //Function initializes 32 piece objects
-    initPieceObjects: function () {
+    initPieceObjects: function (mainMenu) {
         const imgs = document.querySelectorAll("img");
         imgs.forEach(img => {
             const objectProperties = this.defineObjectProperties(img);
 
             //Create a new object
-            let piece = this.createNewObject(...objectProperties, img);
+            let piece = this.createNewObject(...objectProperties, img, mainMenu);
             this.piecesArray.push(piece);
         })
     },
@@ -248,6 +263,7 @@ const chessBoard = {
     isKing: (square) => square.querySelector("img")?.getAttribute("src").includes("king"),
     isCheck: function () {
         let isCheck = false;
+        this.resetSquareColors();
         
         this.piecesArray.forEach(piece => {
             if(piece.side !== this.turn) {
@@ -261,7 +277,6 @@ const chessBoard = {
                         isCheck = true;
                     }
                 });
-
                 this.resetSquareColors();
             }
         });
@@ -333,7 +348,7 @@ const chessBoard = {
         this.pieceTypeOptionMenuDisplayed = false;
     },
 
-    transformSoldier(target) {
+    transformSoldier(target, mainMenu) {
         const iconContainer = target.closest(".icon-container");
         if(!iconContainer) return;
 
@@ -353,7 +368,7 @@ const chessBoard = {
             newPieceIcon.src = iconContainer.querySelector("img").getAttribute("src");
             soldierLocationSquare.appendChild(newPieceIcon);
             const objectProperties = this.defineObjectProperties(soldierLocationSquare.querySelector("img"));
-            const newPieceObject = this.createNewObject(...objectProperties, newPieceIcon);
+            const newPieceObject = this.createNewObject(...objectProperties, newPieceIcon, mainMenu);
             this.piecesArray.push(newPieceObject);
 
             this.checkCheckStatus();
@@ -404,9 +419,6 @@ const chessBoard = {
         square.append(this.selectedObject.icon);
         this.selectedObject.locationId = square.getAttribute("id");
         const [column, row] = this.selectedObject.getThisLocation();
-        chessBoard.turn = chessBoard.turn === "white" ? "black" : "white";
-        this.selectedObject.turnCount++;
-        document.querySelector(".turn-value").textContent = this.turn.toUpperCase();
         const enemySquare = document.getElementById(`${this.selectedObject.side === "white" ? column + 1 : column - 1} ${row}`);
         this.removeObjectFromArray(enemySquare);
         enemySquare.removeChild(enemySquare.querySelector("img"));

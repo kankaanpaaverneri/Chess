@@ -1,17 +1,30 @@
 "use strict"
 
 class Piece {
+    #owner;
     #locationId;
     #type;
     #side;
     #icon;
     #turnCount;
-    constructor(locationId, type, side, icon) {
+    constructor(locationId, type, side, icon, mainMenu) {
         this.#locationId = locationId;
         this.#type = type;
         this.#side = side;
         this.#icon = icon;
         this.#turnCount = 0;
+        this.#owner = this.defineOwner(mainMenu);
+    }
+
+    defineOwner(mainMenu) {
+
+        let owner;
+        if(this.side === mainMenu.opponentSide) {
+            owner = mainMenu.opponent;
+        } else {
+            owner = mainMenu.player;
+        }
+        return owner;
     }
 
     isOwnUnit(square) {
@@ -53,38 +66,36 @@ class Piece {
         }
     }
 
-    willPieceDefendKing(chessBoardObject) {
-        const movementSquares = chessBoardObject.getAllMovementSquares();
+    willPieceDefendKing(chessBoard) {
+        const allSquares = [...document.querySelectorAll(".square")];
+        const movementSquares = chessBoard.getAllMovementSquares(allSquares);
         const validMovementSquares = [];
 
         //Need to save redSquares for displayValidCheckDefendMovements function
-        const redSquares = this.getAllRedSquares(movementSquares, chessBoardObject);
+        const redSquares = this.getAllRedSquares(movementSquares, chessBoard);
 
         movementSquares.forEach(square => {
 
-            //Remove icon if it already has one
+            //Remove icon if square already has one
             let removedPiece = undefined;
             if(square.querySelector("img"))
-                removedPiece = chessBoardObject.removeObjectFromArray(square);
+                removedPiece = chessBoard.removeObjectFromArray(square);
 
-            //append this piece to square
             square.appendChild(this.icon);
 
-            chessBoardObject.resetSquareColors();
-            //If not check then this square is valid
-            if(!chessBoardObject.isCheck())
+            if(!chessBoard.isCheck())
                 validMovementSquares.push(square);
 
             //Append the removed icon back
             if(removedPiece) {
                 square.appendChild(removedPiece.icon);
-                chessBoardObject.piecesArray.push(removedPiece);
+                chessBoard.piecesArray.push(removedPiece);
             }
         });
         //Append the piece back to it´s original location.
         document.getElementById(`${this.locationId}`).appendChild(this.icon);
         //Finally we can display all validMovements
-        chessBoardObject.displayValidCheckDefendMovements(validMovementSquares, redSquares);
+        chessBoard.displayValidCheckDefendMovements(validMovementSquares, redSquares);
     }
 
     getAllRedSquares(squares, chessBoardObject) {
@@ -94,6 +105,22 @@ class Piece {
                 redSquares.push(square);
         });
         return redSquares;
+    }
+
+    getAllPossibleMovements(squares) {
+        return squares.filter(square => {
+            if(square.style.background === chessBoard.validMoveColor || square.style.background === chessBoard.validEatColor)
+                return square;
+        });
+    }
+
+    removeIconTemporarily(square) {
+        const piece = chessBoard.piecesArray.find(piece => {
+            if(piece.icon === square.querySelector("img"))
+                return piece.icon;
+        });
+        square.removeChild(square.querySelector("img"));
+        return piece;
     }
 
     
@@ -108,13 +135,26 @@ class Piece {
 
     get side() {
         return this.#side;
-    } 
+    }
+
+    get locationId() {
+        return this.#locationId;
+    }
+
+    get turnCount() {
+        return this.#turnCount;
+    }
+
+    get icon() {
+        return this.#icon;
+    }
+
+    get owner() {
+        return this.#owner;
+    }
 
     set side(side) {
         this.#side = side;
-    }
-    get locationId() {
-        return this.#locationId;
     }
     set locationId(locationId) {
         this.#locationId = locationId;
@@ -125,16 +165,12 @@ class Piece {
         this.#icon = icon;
     }
 
-    get turnCount() {
-        return this.#turnCount;
-    }
-
     set turnCount(turnCount) {
         this.#turnCount = turnCount;
     }
 
-    get icon() {
-        return this.#icon;
+    set owner(owner) {
+        this.#owner = owner;
     }
 }
 
@@ -143,9 +179,9 @@ class Soldier extends Piece {
     #enPassant;
     #secondSquare;
     #pieceIsInSecondSquare;
-    constructor(locationId, type, side, icon)
+    constructor(locationId, type, side, icon, mainMenu)
     {
-        super(locationId, type, side, icon);
+        super(locationId, type, side, icon, mainMenu);
         this.#transformPiece = false;
         this.#enPassant = false;
         this.#pieceIsInSecondSquare = false;
@@ -195,10 +231,7 @@ class Soldier extends Piece {
         const firstSquare = document.getElementById(`${this.side === "white" ? i-1 : i+1} ${j}`);
         const secondSquare = document.getElementById(`${this.side === "white" ? i-2 : i+2} ${j}`);
 
-        //switch soldier to a new object
-        if(!firstSquare) {       
-            return;
-        }
+        if(!firstSquare) return;
 
         if(this.turnCount === 0 && chessBoard.isSquareEmpty(secondSquare) && chessBoard.isSquareEmpty(firstSquare)) {
             secondSquare.style.background = chessBoard.validMoveColor;
@@ -289,9 +322,9 @@ class Soldier extends Piece {
 }
 
 class Tower extends Piece {
-    constructor(locationId, type, side, icon)
+    constructor(locationId, type, side, icon, mainMenu)
     {
-        super(locationId, type, side, icon);
+        super(locationId, type, side, icon, mainMenu);
     }
 
     displayValidMovements() {
@@ -312,9 +345,9 @@ class Tower extends Piece {
 }
 
 class Horse extends Piece {
-    constructor(locationId, type, side, icon)
+    constructor(locationId, type, side, icon, mainMenu)
     {
-        super(locationId, type, side, icon);
+        super(locationId, type, side, icon, mainMenu);
     }
 
     displayValidMovements() {
@@ -346,9 +379,9 @@ class Horse extends Piece {
 }
 
 class Bishop extends Piece {
-    constructor(locationId, type, side, icon)
+    constructor(locationId, type, side, icon, mainMenu)
     {
-        super(locationId, type, side, icon);
+        super(locationId, type, side, icon, mainMenu);
     }
 
     displayValidMovements() {
@@ -369,9 +402,9 @@ class Bishop extends Piece {
 }
 
 class King extends Piece {
-    constructor(locationId, type, side, icon)
+    constructor(locationId, type, side, icon, mainMenu)
     {
-        super(locationId, type, side, icon);
+        super(locationId, type, side, icon, mainMenu);
     }
 
     displayValidMovements() {
@@ -406,40 +439,26 @@ class King extends Piece {
     removeKingsCheckSquares() {
         const checkSquares = this.getCheckSquares();
             
-        if(checkSquares.length > 0) {
-            this.displayValidMovements();
-            checkSquares.forEach(square => {
-                const [column, row] = square.getAttribute("id").split(" ");
-                square.style.background = chessBoard.squareColors[column][row];
-            })
-        } else {
-            this.displayValidMovements();
-        }
+        if(checkSquares.length === 0)
+            return;
+
+        checkSquares.forEach(square => {
+            const [column, row] = square.getAttribute("id").split(" ");
+            square.style.background = chessBoard.squareColors[column][row];
+        });
     }
 
     getCheckSquares() {
         //This function expects that the kings moves are highlighted in the board
-        const checkSquares = [];
         const squares = [...document.querySelectorAll(".square")];
         
-        //Get every kings possible movements in to movementSquares array
-        const movementSquares = this.getAllPossibleKingsMovements(squares);
+        const movementSquares = this.getAllPossibleMovements(squares);
+        return this.filterAllCheckSquares(movementSquares);
+    }
+
+    filterAllCheckSquares(movementSquares) {
+        const checkSquares = [];
         chessBoard.resetSquareColors();
-        this.checkIfMovementSquaresSafe(movementSquares, checkSquares);
-        
-        return checkSquares;
-    }
-
-    getAllPossibleKingsMovements(squares) {
-        const movementSquares = squares.filter(square => {
-            if(square.style.background === chessBoard.validMoveColor ||
-                square.style.background === chessBoard.validEatColor)
-                return square;
-        });
-        return movementSquares;
-    }
-
-    checkIfMovementSquaresSafe(movementSquares, checkSquares) {
         movementSquares.forEach(movementSquare => {
 
             //if there is a icon in the movementSquare, remove it temporarily.
@@ -456,19 +475,13 @@ class King extends Piece {
 
             //Remove appended king
             document.getElementById(this.locationId).appendChild(this.icon);
-            if(removedPiece)
-                this.appendBackRemovedPiece(removedPiece);
+
+            //Append the removedPiece
+            if(removedPiece) this.appendBackRemovedPiece(removedPiece);
         });
+        //Now that we have checkSquares. We can displayValidMovements again
+        this.displayValidMovements();
         return checkSquares;
-    }
-    
-    removeIconTemporarily(square) {
-        const piece = chessBoard.piecesArray.find(piece => {
-            if(piece.icon === square.querySelector("img"))
-                return piece.icon;
-        });
-        square.removeChild(square.querySelector("img"));
-        return piece;
     }
 
     appendBackRemovedPiece(removedPiece) {
@@ -533,9 +546,9 @@ class King extends Piece {
 }
 
 class Queen extends Piece {
-    constructor(locationId, type, side, icon)
+    constructor(locationId, type, side, icon, mainMenu)
     {
-        super(locationId, type, side, icon);
+        super(locationId, type, side, icon, mainMenu);
     }
 
     displayValidMovements() {
