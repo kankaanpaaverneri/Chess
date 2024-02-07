@@ -1,0 +1,137 @@
+body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-family: 'Gabarito', sans-serif;
+}
+
+.modal-window {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: white;
+    border: 1px solid black;
+    border-radius: 5%;
+    color:black;
+    text-align: center;
+    padding: 1%;
+    margin: 1%;
+}
+
+.player-type-buttons, .player-side-buttons {
+    display: flex;
+    flex-direction: column;
+    margin: 10%;
+}
+
+.start-game-button-div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.start-game-button {
+    border: none;
+    border-radius: 15px;
+    margin-top: 5%;
+    padding: 5%;
+    cursor: pointer;
+    background: rgb(92, 92, 255);
+    color: white;
+}
+
+.start-game-button:hover {
+    background: rgb(72, 72, 202);
+}
+
+.blur {
+    filter: blur(5px);
+}
+
+input {
+    cursor: pointer;
+}
+
+h1, h2, span {
+    font-size: 20px;
+}
+
+#chess {
+    font-size: 25px;
+    font-weight: bold;
+}
+
+
+.header {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.chessboard-container {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    border: 2px solid black;
+    box-shadow: 20px 20px 25px rgb(0, 0, 0);
+}
+
+.square {
+    display: flex;
+    cursor: pointer;
+    position: relative;
+    width: 5rem;
+    height: 5rem;
+}
+
+.icon {
+    cursor: pointer;
+    width: 5rem;
+    height: auto;
+}
+
+.icon:hover {
+    background: white;
+    transition: 0.5s;
+}
+
+
+@media screen and (min-width: 1000px) {
+    .square {
+        width: 4rem;
+        height: 4rem;
+    }
+
+    .piece-type-option-menu {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        background: rgba(131, 127, 127, 0.5);
+        width: 20%;
+        height: 20%;
+        
+    }
+    .icon {
+        cursor: pointer;
+        width: 4rem;
+        height: auto;
+    }
+}
+
+.highlight-color {
+    background-color: rgba(250, 253, 40, 0.5);
+}
+
+.hidden {
+    display: none;
+}

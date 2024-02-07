@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Chess</title>
+        <link rel="stylesheet" href="style.css">
+
+
+        <!--Font links-->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Gabarito:wght@500&display=swap" rel="stylesheet"> 
+    </head>
+    <body style="background-color: rgb(0, 0, 0);">
+        <div class="modal-window">
+            <h1>Choose an opponent</h1>
+            <div class="player-type-buttons">
+                <label>Human</label>
+                <input type="radio" id="human-button" name="player-type">
+                <label>Computer</label>
+                <input type="radio" id="computer-button" name="player-type">
+            </div>
+            <h1>Choose your side</h1>
+            <div class="player-side-buttons">
+                <label>White</label>
+                <input type="radio" id="white-side-button" name="player-side">
+                <label>Black</label>
+                <input type="radio" id="black-side-button" name="player-side">
+            </div>
+            <div class="start-game-button-div">
+                <button class="start-game-button">Start game</button>
+            </div>
+        </div>
+        <div class="header blur">
+            <h1 id="chess">CHESS</h1>
+            <h2>Turn: <span class="turn-value">WHITE</span></h2>
+            <div class="checkmate-status-container">
+                <h1 class="hidden check">Check</h1>
+            </div>
+        </div>
+        <div class="chessboard-container blur">
+           
+        </div>
+    </body>
+    <script defer src="dom.js"></script>
+    <script defer src="MainMenu.js"></script>
+    <script defer src="Players.js"></script>
+    <script defer src="chessboard.js"></script>
+    <script defer src="Piece.js"></script>
+    <script defer src="script.js"></script>
+</html>
